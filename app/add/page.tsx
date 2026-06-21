@@ -16,7 +16,8 @@ export default function AddRecipe() {
   })
   const [image, setImage] = useState(null)
   const [preview, setPreview] = useState(null)
-
+  const [importUrl, setImportUrl] = useState('')
+const [importing, setImporting] = useState(false)
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -29,7 +30,31 @@ export default function AddRecipe() {
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
-
+async function handleImport() {
+  if (!importUrl) return
+  setImporting(true)
+  try {
+    const res = await fetch('/api/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: importUrl })
+    })
+    const data = await res.json()
+    if (data.error) { alert('Kunne ikke hente opskriften — prøv en anden side'); return }
+    setForm({
+      title: data.title || '',
+      description: data.description || '',
+      ingredients: data.ingredients || '',
+      instructions: data.instructions || '',
+      category: '',
+      cook_time: '',
+    })
+    if (data.image_url) setPreview(data.image_url)
+  } catch {
+    alert('Noget gik galt — prøv igen')
+  }
+  setImporting(false)
+}
   function handleImage(e) {
     const file = e.target.files[0]
     if (file) {
@@ -88,7 +113,24 @@ export default function AddRecipe() {
       </nav>
 
       <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
-
+<div className="bg-orange-50 border border-orange-200 rounded-2xl p-5">
+          <p className="text-sm font-medium text-orange-800 mb-3">🔗 Importer fra link</p>
+          <div className="flex gap-2">
+            <input
+              value={importUrl}
+              onChange={e => setImportUrl(e.target.value)}
+              placeholder="fx https://www.arla.dk/opskrifter/..."
+              className="flex-1 border border-orange-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-orange-400 bg-white"
+            />
+            <button
+              onClick={handleImport}
+              disabled={importing}
+              className="bg-orange-600 text-white rounded-xl px-4 py-2 text-sm font-medium hover:bg-orange-700 disabled:opacity-50"
+            >
+              {importing ? 'Henter...' : 'Hent'}
+            </button>
+          </div>
+        </div>
         <div>
           <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Billede</label>
           {preview && <img src={preview} className="w-full h-48 object-cover rounded-xl mb-3" />}
