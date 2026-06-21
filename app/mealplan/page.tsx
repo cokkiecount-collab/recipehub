@@ -111,7 +111,7 @@ export default function MealPlan() {
   return (
     <main className="min-h-screen bg-stone-50">
       <nav className="bg-white border-b border-stone-200 px-4 py-4 flex items-center gap-3">
-        <a href="/feed" className="text-stone-400 hover:text-stone-600 text-sm">← Feed</a>
+        <a href="/feed" className="text-stone-600 hover:text-stone-800 text-sm font-medium">← Feed</a>
         <h1 className="font-serif text-xl text-green-900">🗓 Madplan</h1>
         <div className="flex-1" />
         <button
@@ -130,14 +130,14 @@ export default function MealPlan() {
 
         {/* Uge navigation */}
         <div className="flex items-center gap-2 mb-4">
-          <button onClick={() => setWeekOffset(weekOffset - 1)} className="border border-stone-200 rounded-xl px-3 py-2 text-xs bg-white hover:bg-stone-50">← Forrige</button>
+          <button onClick={() => setWeekOffset(weekOffset - 1)} className="border border-stone-300 rounded-xl px-3 py-2 text-xs bg-white hover:bg-stone-50 text-stone-700 font-medium">← Forrige</button>
           <div className="flex-1 text-center">
             <span className="text-xs font-medium text-stone-600">
               {days[0].toLocaleDateString('da-DK', { day: 'numeric', month: 'long' })} — {days[6].toLocaleDateString('da-DK', { day: 'numeric', month: 'long' })}
             </span>
           </div>
-          <button onClick={() => setWeekOffset(weekOffset + 1)} className="border border-stone-200 rounded-xl px-3 py-2 text-xs bg-white hover:bg-stone-50">Næste →</button>
-          {weekOffset !== 0 && <button onClick={() => setWeekOffset(0)} className="text-xs text-green-900 hover:underline">I dag</button>}
+          <button onClick={() => setWeekOffset(weekOffset + 1)} className="border border-stone-300 rounded-xl px-3 py-2 text-xs bg-white hover:bg-stone-50 text-stone-700 font-medium">Næste →</button>
+          {weekOffset !== 0 && <button onClick={() => setWeekOffset(0)} className="text-xs text-green-900 font-medium hover:underline">I dag</button>}
         </div>
 
         {/* MOBIL: Dag-tabs + enkelt dag visning */}
@@ -150,7 +150,7 @@ export default function MealPlan() {
                 <button
                   key={i}
                   onClick={() => setSelectedDay(i)}
-                  className={`flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-xl border text-xs font-medium transition-colors ${selectedDay === i ? 'bg-green-900 text-white border-green-900' : isToday ? 'border-green-400 text-green-700 bg-green-50' : 'border-stone-200 bg-white text-stone-500'}`}
+                  className={`flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-xl border text-xs font-medium transition-colors ${selectedDay === i ? 'bg-green-900 text-white border-green-900' : isToday ? 'border-green-400 text-green-700 bg-green-50' : 'border-stone-200 bg-white text-stone-600'}`}
                 >
                   <span>{dayNamesShort[i]}</span>
                   <span className="text-base font-serif">{day.getDate()}</span>
@@ -160,7 +160,6 @@ export default function MealPlan() {
             })}
           </div>
 
-          {/* Valgt dag på mobil */}
           {(() => {
             const day = days[selectedDay]
             const dateStr = formatDate(day)
@@ -170,7 +169,7 @@ export default function MealPlan() {
               <div className={`bg-white rounded-2xl border ${isToday ? 'border-green-400' : 'border-stone-200'} p-4`}>
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className={`text-xs font-medium uppercase tracking-wide ${isToday ? 'text-green-700' : 'text-stone-400'}`}>{dayNames[selectedDay]}</p>
+                    <p className={`text-xs font-medium uppercase tracking-wide ${isToday ? 'text-green-700' : 'text-stone-500'}`}>{dayNames[selectedDay]}</p>
                     <p className={`text-2xl font-serif ${isToday ? 'text-green-900' : 'text-stone-700'}`}>{day.getDate()} {day.toLocaleDateString('da-DK', { month: 'long' })}</p>
                   </div>
                   <button
@@ -191,7 +190,7 @@ export default function MealPlan() {
                     if (typeMeals.length === 0) return null
                     return (
                       <div key={type}>
-                        <p className="text-xs font-medium text-stone-400 uppercase tracking-wide mb-1">{type}</p>
+                        <p className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-1">{type}</p>
                         {typeMeals.map(meal => (
                           <div key={meal.id} className="bg-orange-50 rounded-xl p-3 flex items-center gap-3 group">
                             {meal.recipes?.image_url && <img src={meal.recipes.image_url} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />}
@@ -220,7 +219,7 @@ export default function MealPlan() {
             return (
               <div key={dateStr} className={`bg-white rounded-2xl border ${isToday ? 'border-green-400' : 'border-stone-200'} p-3 min-h-48`}>
                 <div className="mb-3">
-                  <p className={`text-xs font-medium uppercase tracking-wide ${isToday ? 'text-green-700' : 'text-stone-400'}`}>{dayNames[i]}</p>
+                  <p className={`text-xs font-medium uppercase tracking-wide ${isToday ? 'text-green-700' : 'text-stone-500'}`}>{dayNames[i]}</p>
                   <p className={`text-lg font-serif ${isToday ? 'text-green-900' : 'text-stone-700'}`}>{day.getDate()}</p>
                 </div>
 
@@ -241,7 +240,7 @@ export default function MealPlan() {
 
                 <button
                   onClick={() => setShowPicker({ date: dateStr, mealType: 'Aftensmad' })}
-                  className="w-full text-xs text-stone-300 hover:text-green-700 hover:bg-green-50 rounded-lg py-1 transition-colors"
+                  className="w-full text-xs text-stone-500 hover:text-green-700 hover:bg-green-50 rounded-lg py-1 transition-colors font-medium"
                 >
                   + Tilføj
                 </button>
@@ -257,7 +256,7 @@ export default function MealPlan() {
           <div className="bg-white rounded-2xl w-full max-w-md p-6 max-h-96 flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-serif text-lg text-stone-800">Vælg opskrift</h2>
-              <button onClick={() => setShowPicker(null)} className="text-stone-400 hover:text-stone-600">✕</button>
+              <button onClick={() => setShowPicker(null)} className="text-stone-500 hover:text-stone-700 font-medium">✕</button>
             </div>
 
             <div className="flex gap-2 mb-4 flex-wrap">
@@ -265,7 +264,7 @@ export default function MealPlan() {
                 <button
                   key={type}
                   onClick={() => setShowPicker({ ...showPicker, mealType: type })}
-                  className={`text-xs px-3 py-1.5 rounded-full border font-medium ${showPicker.mealType === type ? 'bg-green-900 text-white border-green-900' : 'border-stone-200 text-stone-500'}`}
+                  className={`text-xs px-3 py-1.5 rounded-full border font-medium ${showPicker.mealType === type ? 'bg-green-900 text-white border-green-900' : 'border-stone-200 text-stone-600'}`}
                 >
                   {type}
                 </button>
@@ -292,7 +291,7 @@ export default function MealPlan() {
                   }
                   <div>
                     <p className="text-sm font-medium text-stone-800">{recipe.title}</p>
-                    {recipe.category && <p className="text-xs text-stone-400">{recipe.category}</p>}
+                    {recipe.category && <p className="text-xs text-stone-500">{recipe.category}</p>}
                   </div>
                 </div>
               ))}
