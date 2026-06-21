@@ -12,6 +12,10 @@ export default function RecipePage() {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState(null as any)
   const [saving, setSaving] = useState(false)
+  const [servings, setServings] = useState(4)
+  const [baseServings] = useState(4)
+  const [checkedIngredients, setCheckedIngredients] = useState(new Set())
+  const [checkedSteps, setCheckedSteps] = useState(new Set())
 
   useEffect(() => {
     async function load() {
@@ -65,10 +69,37 @@ export default function RecipePage() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
+  function toggleIngredient(i: number) {
+    const next = new Set(checkedIngredients)
+    if (next.has(i)) next.delete(i)
+    else next.add(i)
+    setCheckedIngredients(next)
+  }
+
+  function toggleStep(i: number) {
+    const next = new Set(checkedSteps)
+    if (next.has(i)) next.delete(i)
+    else next.add(i)
+    setCheckedSteps(next)
+  }
+
+  function scaleAmount(text: string) {
+    const ratio = servings / baseServings
+    return text.replace(/(\d+([.,]\d+)?)/g, (match: string) => {
+      const num = parseFloat(match.replace(',', '.'))
+      const scaled = num * ratio
+      const result = scaled % 1 === 0 ? scaled.toString() : scaled.toFixed(1)
+      return result.replace('.', ',')
+    })
+  }
+
   const inputClass = "w-full border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-800 text-stone-800 bg-white placeholder-stone-300"
 
   if (loading) return <div className="min-h-screen bg-stone-50 flex items-center justify-center"><p className="text-stone-400">Indlæser...</p></div>
   if (!recipe) return <div className="min-h-screen bg-stone-50 flex items-center justify-center"><p className="text-stone-400">Opskrift ikke fundet</p></div>
+
+  const ingredients = recipe.ingredients ? recipe.ingredients.split('\n').filter((l: string) => l.trim()) : []
+  const steps = recipe.instructions ? recipe.instructions.split('\n').filter((l: string) => l.trim()) : []
 
   return (
     <main className="min-h-screen bg-stone-50">
@@ -103,9 +134,7 @@ export default function RecipePage() {
 
         {!editing ? (
           <>
-            <div className="flex items-start justify-between mb-4">
-              <h1 className="font-serif text-3xl text-stone-800">{recipe.title}</h1>
-            </div>
+            <h1 className="font-serif text-3xl text-stone-800 mb-4">{recipe.title}</h1>
 
             <div className="flex gap-3 mb-6">
               {recipe.category && <span className="text-xs bg-orange-50 text-orange-700 px-3 py-1 rounded-full">{recipe.category}</span>}
@@ -114,20 +143,58 @@ export default function RecipePage() {
 
             {recipe.description && <p className="text-stone-600 mb-8">{recipe.description}</p>}
 
-            {recipe.ingredients && (
+            {/* Opskalering */}
+            <div className="bg-green-50 border border-green-200 rounded-2xl p-4 mb-8 flex items-center gap-4">
+              <span className="text-sm font-medium text-green-900">Antal personer</span>
+              <div className="flex items-center gap-3 ml-auto">
+                <button onClick={() => setServings(Math.max(1, servings - 1))} className="w-8 h-8 rounded-full bg-green-900 text-white flex items-center justify-center text-lg font-medium hover:bg-green-800">−</button>
+                <span className="text-lg font-medium text-green-900 w-6 text-center">{servings}</span>
+                <button onClick={() => setServings(servings + 1)} className="w-8 h-8 rounded-full bg-green-900 text-white flex items-center justify-center text-lg font-medium hover:bg-green-800">+</button>
+              </div>
+            </div>
+
+            {/* Ingredienser med kryds-af */}
+            {ingredients.length > 0 && (
               <div className="mb-8">
-                <h2 className="font-serif text-xl text-stone-800 mb-4">Ingredienser</h2>
-                <div className="bg-white rounded-2xl border border-stone-200 p-6">
-                  <p className="text-stone-600 whitespace-pre-line text-sm leading-relaxed">{recipe.ingredients}</p>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-serif text-xl text-stone-800">Ingredienser</h2>
+                  {checkedIngredients.size > 0 && (
+                    <button onClick={() => setCheckedIngredients(new Set())} className="text-xs text-stone-400 hover:text-stone-600">Nulstil</button>
+                  )}
+                </div>
+                <div className="bg-white rounded-2xl border border-stone-200 divide-y divide-stone-100">
+                  {ingredients.map((ing: string, i: number) => (
+                    <div key={i} onClick={() => toggleIngredient(i)} className="flex items-center gap-3 px-5 py-3 cursor-pointer hover:bg-stone-50">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${checkedIngredients.has(i) ? 'bg-green-900 border-green-900' : 'border-stone-300'}`}>
+                        {checkedIngredients.has(i) && <span className="text-white text-xs">✓</span>}
+                      </div>
+                      <span className={`text-sm transition-colors ${checkedIngredients.has(i) ? 'line-through text-stone-300' : 'text-stone-700'}`}>
+                        {scaleAmount(ing)}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
-            {recipe.instructions && (
+            {/* Fremgangsmåde med kryds-af */}
+            {steps.length > 0 && (
               <div>
-                <h2 className="font-serif text-xl text-stone-800 mb-4">Fremgangsmåde</h2>
-                <div className="bg-white rounded-2xl border border-stone-200 p-6">
-                  <p className="text-stone-600 whitespace-pre-line text-sm leading-relaxed">{recipe.instructions}</p>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-serif text-xl text-stone-800">Fremgangsmåde</h2>
+                  {checkedSteps.size > 0 && (
+                    <button onClick={() => setCheckedSteps(new Set())} className="text-xs text-stone-400 hover:text-stone-600">Nulstil</button>
+                  )}
+                </div>
+                <div className="space-y-3">
+                  {steps.map((step: string, i: number) => (
+                    <div key={i} onClick={() => toggleStep(i)} className={`bg-white rounded-xl border px-5 py-4 cursor-pointer flex gap-4 items-start transition-colors ${checkedSteps.has(i) ? 'border-green-200 bg-green-50' : 'border-stone-200 hover:bg-stone-50'}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 mt-0.5 transition-colors ${checkedSteps.has(i) ? 'bg-green-900 text-white' : 'bg-stone-100 text-stone-500'}`}>
+                        {checkedSteps.has(i) ? '✓' : i + 1}
+                      </div>
+                      <p className={`text-sm leading-relaxed transition-colors ${checkedSteps.has(i) ? 'text-stone-400' : 'text-stone-700'}`}>{step}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
