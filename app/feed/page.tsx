@@ -58,6 +58,7 @@ export default function Feed() {
         <h1 className="font-serif text-2xl text-green-900">🍃 RecipeHub</h1>
         <div className="flex-1" />
         <a href="/add" className="bg-green-900 text-white rounded-xl px-4 py-2 text-sm font-medium hover:bg-green-800">+ Tilføj</a>
+        <a href="/mealplan" className="border border-green-900 text-green-900 rounded-xl px-4 py-2 text-sm font-medium hover:bg-green-50">🗓 Madplan</a>
         <a href="/profile" className="text-stone-400 text-sm hover:text-stone-600">Min profil</a>
         <button onClick={logout} className="text-stone-400 text-sm hover:text-stone-600">Log ud</button>
       </nav>
@@ -70,7 +71,7 @@ export default function Feed() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Søg efter opskrift..."
-            className="flex-1 border border-stone-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-green-800 bg-white"
+            className="flex-1 border border-stone-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-green-800 bg-white text-stone-800"
           />
           <button onClick={() => setView(view === 'grid' ? 'list' : 'grid')} className="border border-stone-200 rounded-xl px-4 py-2.5 text-sm bg-white text-stone-500 hover:border-stone-400">
             {view === 'grid' ? '☰ Kartotek' : '⊞ Grid'}

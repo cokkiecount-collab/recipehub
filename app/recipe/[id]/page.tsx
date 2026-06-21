@@ -83,15 +83,44 @@ export default function RecipePage() {
     setCheckedSteps(next)
   }
 
-  function scaleAmount(text: string) {
-    const ratio = servings / baseServings
-    return text.replace(/(\d+([.,]\d+)?)/g, (match: string) => {
-      const num = parseFloat(match.replace(',', '.'))
-      const scaled = num * ratio
-      const result = scaled % 1 === 0 ? scaled.toString() : scaled.toFixed(1)
-      return result.replace('.', ',')
-    })
+ function scaleAmount(text: string) {
+  const ratio = servings / baseServings
+
+  const fractions: any = {
+    '½': 0.5, '⅓': 0.333, '⅔': 0.667,
+    '¼': 0.25, '¾': 0.75, '⅛': 0.125
   }
+
+  function formatNum(n: number) {
+    if (n === 0.5) return '½'
+    if (n === 0.25) return '¼'
+    if (n === 0.75) return '¾'
+    if (n === 0.333 || n.toFixed(2) === '0.33') return '⅓'
+    if (n === 0.667 || n.toFixed(2) === '0.67') return '⅔'
+    if (n % 1 === 0) return n.toString()
+    return n.toFixed(1).replace('.', ',')
+  }
+
+  // Håndter brøker som 1/2, 3/4 osv.
+  text = text.replace(/(\d+)\/(\d+)/g, (_: string, a: string, b: string) => {
+    const scaled = (parseInt(a) / parseInt(b)) * ratio
+    return formatNum(scaled)
+  })
+
+  // Håndter Unicode brøktegn som ½ ¼ ¾
+  for (const [frac, val] of Object.entries(fractions)) {
+    const regex = new RegExp(frac, 'g')
+    text = text.replace(regex, formatNum(val * ratio))
+  }
+
+  // Håndter normale tal
+  text = text.replace(/(\d+([.,]\d+)?)/g, (match: string) => {
+    const num = parseFloat(match.replace(',', '.'))
+    return formatNum(num * ratio)
+  })
+
+  return text
+}
 
   const inputClass = "w-full border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-800 text-stone-800 bg-white placeholder-stone-300"
 
