@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 
 export default function Profile() {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(null as any)
   const [myRecipes, setMyRecipes] = useState([])
   const [savedRecipes, setSavedRecipes] = useState([])
   const [tab, setTab] = useState('mine')

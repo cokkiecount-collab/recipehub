@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase'
 
 export default function Feed() {
   const [recipes, setRecipes] = useState([])
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(null as any)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

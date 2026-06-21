@@ -6,7 +6,7 @@ import { supabase } from '../../../lib/supabase'
 export default function RecipePage() {
   const { id } = useParams()
   const [recipe, setRecipe] = useState(null)
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(null as any)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
 
