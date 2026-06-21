@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
 export default function Home() {
@@ -9,10 +9,17 @@ export default function Home() {
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
 
+  useEffect(() => {
+    async function checkSession() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) window.location.href = '/feed'
+    }
+    checkSession()
+  }, [])
+
   async function handleAuth() {
     setLoading(true)
     setMessage('')
-
     if (isSignUp) {
       const { error } = await supabase.auth.signUp({ email, password })
       if (error) setMessage(error.message)
@@ -30,7 +37,6 @@ export default function Home() {
       <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-8 w-full max-w-md">
         <h1 className="font-serif text-3xl text-green-900 mb-1">🍃 RecipeHub</h1>
         <p className="text-stone-500 text-sm mb-8">Gem og opdag opskrifter du elsker</p>
-
         <div className="flex mb-6 border-b border-stone-200">
           <button
             onClick={() => setIsSignUp(false)}
@@ -45,7 +51,6 @@ export default function Home() {
             Opret konto
           </button>
         </div>
-
         <div className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-1">Email</label>
@@ -54,7 +59,7 @@ export default function Home() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="din@email.dk"
-              className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-800"
+              className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-800 text-stone-800"
             />
           </div>
           <div>
@@ -64,16 +69,14 @@ export default function Home() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-800"
+              className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-800 text-stone-800"
             />
           </div>
-
           {message && (
             <p className={`text-sm p-3 rounded-xl ${message.includes('email') ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-700'}`}>
               {message}
             </p>
           )}
-
           <button
             onClick={handleAuth}
             disabled={loading}
