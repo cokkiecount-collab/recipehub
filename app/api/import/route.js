@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@supabase/supabase-js'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
 })
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 export async function POST(request) {
   const { url } = await request.json()
@@ -14,7 +20,6 @@ export async function POST(request) {
     })
     const html = await res.text()
 
-    // Fjern scripts og styles så Claude får mindre at læse
     const cleanHtml = html
       .replace(/<script[\s\S]*?<\/script>/gi, '')
       .replace(/<style[\s\S]*?<\/style>/gi, '')
@@ -22,9 +27,33 @@ export async function POST(request) {
       .replace(/\s+/g, ' ')
       .slice(0, 15000)
 
-    // Hent billede direkte fra HTML
+    // Hent billede URL fra siden
     const ogImage = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i)
-    const image_url = ogImage ? ogImage[1] : null
+    let image_url = ogImage ? ogImage[1] : null
+
+    // Upload billedet til vores eget storage
+    if (image_url) {
+      try {
+        const imgRes = await fetch(image_url)
+        const imgBuffer = await imgRes.arrayBuffer()
+        const contentType = imgRes.headers.get('content-type') || 'image/jpeg'
+        const ext = contentType.includes('png') ? 'png' : contentType.includes('webp') ? 'webp' : 'jpg'
+        const fileName = `imported-${Date.now()}.${ext}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('recipe-images')
+          .upload(fileName, imgBuffer, { contentType })
+
+        if (!uploadError) {
+          const { data: urlData } = supabase.storage
+            .from('recipe-images')
+            .getPublicUrl(fileName)
+          image_url = urlData.publicUrl
+        }
+      } catch {
+        // Behold den originale URL hvis upload fejler
+      }
+    }
 
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
