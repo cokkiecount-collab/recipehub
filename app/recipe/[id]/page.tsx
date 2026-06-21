@@ -138,48 +138,65 @@ export default function RecipePage() {
 
   const ingredients = recipe.ingredients ? recipe.ingredients.split('\n').filter((l: string) => l.trim()) : []
   const steps = recipe.instructions ? recipe.instructions.split('\n').filter((l: string) => l.trim()) : []
+  const isOwner = user && recipe.user_id === user.id
 
   return (
     <main className="min-h-screen bg-stone-50">
-      <nav className="bg-white border-b border-stone-200 px-6 py-4 flex items-center gap-4">
-        <a href="/feed" className="text-stone-400 hover:text-stone-600 text-sm">← Tilbage</a>
+      <nav className="bg-white border-b border-stone-200 px-4 py-4 flex items-center gap-3">
+        <a href="/feed" className="text-stone-600 hover:text-stone-800 text-sm font-medium">← Tilbage</a>
         <div className="flex-1" />
-        {!editing && (
-          <>
-            <button onClick={toggleSave} className={`rounded-xl px-4 py-2 text-sm font-medium border ${saved ? 'bg-green-900 text-white border-green-900' : 'bg-white text-green-900 border-green-900'}`}>
-              {saved ? 'Gemt ✓' : 'Gem opskrift'}
-            </button>
-            <button onClick={() => setShowMealPicker(true)} className="border border-orange-300 text-orange-600 rounded-xl px-4 py-2 text-sm font-medium hover:bg-orange-50">
-              {mealAdded ? '🗓 Tilføjet!' : '🗓 Madplan'}
-            </button>
-            {user && recipe.user_id === user.id && (
-              <>
-                <button onClick={() => setEditing(true)} className="text-stone-500 text-sm hover:text-stone-700 border border-stone-200 rounded-xl px-4 py-2">Rediger</button>
-                <button onClick={deleteRecipe} className="text-red-400 text-sm hover:text-red-600">Slet</button>
-              </>
-            )}
-          </>
-        )}
         {editing && (
           <>
             <button onClick={saveEdit} disabled={saving} className="bg-green-900 text-white rounded-xl px-4 py-2 text-sm font-medium hover:bg-green-800 disabled:opacity-50">
               {saving ? 'Gemmer...' : 'Gem ændringer'}
             </button>
-            <button onClick={() => { setEditing(false); setForm(recipe) }} className="text-stone-400 text-sm hover:text-stone-600">Annuller</button>
+            <button onClick={() => { setEditing(false); setForm(recipe) }} className="text-stone-600 text-sm font-medium hover:text-stone-800">Annuller</button>
           </>
         )}
       </nav>
 
-      <div className="max-w-2xl mx-auto px-6 py-8">
-        {recipe.image_url && <img src={recipe.image_url} alt={recipe.title} className="w-full h-64 object-cover rounded-2xl mb-8" />}
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        {recipe.image_url && <img src={recipe.image_url} alt={recipe.title} className="w-full h-64 object-cover rounded-2xl mb-6" />}
 
         {!editing ? (
           <>
-            <h1 className="font-serif text-3xl text-stone-800 mb-4">{recipe.title}</h1>
+            <h1 className="font-serif text-3xl text-stone-800 mb-3">{recipe.title}</h1>
 
-            <div className="flex gap-3 mb-6">
+            <div className="flex gap-2 flex-wrap mb-4">
               {recipe.category && <span className="text-xs bg-orange-50 text-orange-700 px-3 py-1 rounded-full">{recipe.category}</span>}
-              {recipe.cook_time && <span className="text-xs bg-stone-100 text-stone-500 px-3 py-1 rounded-full">⏱ {recipe.cook_time}</span>}
+              {recipe.cook_time && <span className="text-xs bg-stone-100 text-stone-600 px-3 py-1 rounded-full">⏱ {recipe.cook_time}</span>}
+            </div>
+
+            {/* Handlingsknapper under titlen */}
+            <div className="flex gap-2 flex-wrap mb-6">
+              <button
+                onClick={toggleSave}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-colors ${saved ? 'bg-stone-100 text-stone-500 border-stone-200' : 'bg-green-900 text-white border-green-900 hover:bg-green-800'}`}
+              >
+                {saved ? '✓ Gemt' : 'Gem opskrift'}
+              </button>
+              <button
+                onClick={() => setShowMealPicker(true)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-orange-300 text-orange-600 hover:bg-orange-50 transition-colors"
+              >
+                {mealAdded ? '🗓 Tilføjet!' : '🗓 Madplan'}
+              </button>
+              {isOwner && (
+                <button
+                  onClick={() => setEditing(true)}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-stone-200 text-stone-600 hover:bg-stone-50 transition-colors"
+                >
+                  Rediger
+                </button>
+              )}
+              {isOwner && (
+                <button
+                  onClick={deleteRecipe}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
+                >
+                  Slet
+                </button>
+              )}
             </div>
 
             {recipe.description && <p className="text-stone-600 mb-8">{recipe.description}</p>}
@@ -287,7 +304,7 @@ export default function RecipePage() {
           <div className="bg-white rounded-2xl w-full max-w-sm p-6">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-serif text-lg text-stone-800">Tilføj til madplan</h2>
-              <button onClick={() => setShowMealPicker(false)} className="text-stone-400 hover:text-stone-600">✕</button>
+              <button onClick={() => setShowMealPicker(false)} className="text-stone-500 hover:text-stone-700 font-medium">✕</button>
             </div>
 
             <div className="mb-4">
@@ -307,7 +324,7 @@ export default function RecipePage() {
                   <button
                     key={type}
                     onClick={() => setMealType(type)}
-                    className={`text-sm px-4 py-2 rounded-xl border font-medium ${mealType === type ? 'bg-green-900 text-white border-green-900' : 'border-stone-200 text-stone-500 hover:border-stone-400'}`}
+                    className={`text-sm px-4 py-2 rounded-xl border font-medium ${mealType === type ? 'bg-green-900 text-white border-green-900' : 'border-stone-200 text-stone-600 hover:border-stone-400'}`}
                   >
                     {type}
                   </button>
