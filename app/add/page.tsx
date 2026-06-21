@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 
 export default function AddRecipe() {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(null as any)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [form, setForm] = useState({
