@@ -16,6 +16,12 @@ export default function RecipePage() {
   const [baseServings] = useState(4)
   const [checkedIngredients, setCheckedIngredients] = useState(new Set())
   const [checkedSteps, setCheckedSteps] = useState(new Set())
+  const [showMealPicker, setShowMealPicker] = useState(false)
+  const [mealDate, setMealDate] = useState(new Date().toISOString().split('T')[0])
+  const [mealType, setMealType] = useState('Aftensmad')
+  const [mealAdded, setMealAdded] = useState(false)
+
+  const mealTypes = ['Morgenmad', 'Frokost', 'Aftensmad', 'Snack']
 
   useEffect(() => {
     async function load() {
@@ -40,6 +46,18 @@ export default function RecipePage() {
       await supabase.from('saved_recipes').insert({ user_id: user.id, recipe_id: id })
       setSaved(true)
     }
+  }
+
+  async function addToMealPlan() {
+    await supabase.from('meal_plans').insert({
+      user_id: user.id,
+      recipe_id: id,
+      planned_date: mealDate,
+      meal_type: mealType,
+    })
+    setShowMealPicker(false)
+    setMealAdded(true)
+    setTimeout(() => setMealAdded(false), 3000)
   }
 
   async function deleteRecipe() {
@@ -83,44 +101,35 @@ export default function RecipePage() {
     setCheckedSteps(next)
   }
 
- function scaleAmount(text: string) {
-  const ratio = servings / baseServings
-
-  const fractions: any = {
-    '½': 0.5, '⅓': 0.333, '⅔': 0.667,
-    '¼': 0.25, '¾': 0.75, '⅛': 0.125
+  function scaleAmount(text: string) {
+    const ratio = servings / baseServings
+    const fractions: any = {
+      '½': 0.5, '⅓': 0.333, '⅔': 0.667,
+      '¼': 0.25, '¾': 0.75, '⅛': 0.125
+    }
+    function formatNum(n: number) {
+      if (n === 0.5) return '½'
+      if (n === 0.25) return '¼'
+      if (n === 0.75) return '¾'
+      if (n === 0.333 || n.toFixed(2) === '0.33') return '⅓'
+      if (n === 0.667 || n.toFixed(2) === '0.67') return '⅔'
+      if (n % 1 === 0) return n.toString()
+      return n.toFixed(1).replace('.', ',')
+    }
+    text = text.replace(/(\d+)\/(\d+)/g, (_: string, a: string, b: string) => {
+      const scaled = (parseInt(a) / parseInt(b)) * ratio
+      return formatNum(scaled)
+    })
+    for (const [frac, val] of Object.entries(fractions)) {
+      const regex = new RegExp(frac, 'g')
+      text = text.replace(regex, formatNum(val * ratio))
+    }
+    text = text.replace(/(\d+([.,]\d+)?)/g, (match: string) => {
+      const num = parseFloat(match.replace(',', '.'))
+      return formatNum(num * ratio)
+    })
+    return text
   }
-
-  function formatNum(n: number) {
-    if (n === 0.5) return '½'
-    if (n === 0.25) return '¼'
-    if (n === 0.75) return '¾'
-    if (n === 0.333 || n.toFixed(2) === '0.33') return '⅓'
-    if (n === 0.667 || n.toFixed(2) === '0.67') return '⅔'
-    if (n % 1 === 0) return n.toString()
-    return n.toFixed(1).replace('.', ',')
-  }
-
-  // Håndter brøker som 1/2, 3/4 osv.
-  text = text.replace(/(\d+)\/(\d+)/g, (_: string, a: string, b: string) => {
-    const scaled = (parseInt(a) / parseInt(b)) * ratio
-    return formatNum(scaled)
-  })
-
-  // Håndter Unicode brøktegn som ½ ¼ ¾
-  for (const [frac, val] of Object.entries(fractions)) {
-    const regex = new RegExp(frac, 'g')
-    text = text.replace(regex, formatNum(val * ratio))
-  }
-
-  // Håndter normale tal
-  text = text.replace(/(\d+([.,]\d+)?)/g, (match: string) => {
-    const num = parseFloat(match.replace(',', '.'))
-    return formatNum(num * ratio)
-  })
-
-  return text
-}
 
   const inputClass = "w-full border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-800 text-stone-800 bg-white placeholder-stone-300"
 
@@ -139,6 +148,9 @@ export default function RecipePage() {
           <>
             <button onClick={toggleSave} className={`rounded-xl px-4 py-2 text-sm font-medium border ${saved ? 'bg-green-900 text-white border-green-900' : 'bg-white text-green-900 border-green-900'}`}>
               {saved ? 'Gemt ✓' : 'Gem opskrift'}
+            </button>
+            <button onClick={() => setShowMealPicker(true)} className="border border-orange-300 text-orange-600 rounded-xl px-4 py-2 text-sm font-medium hover:bg-orange-50">
+              {mealAdded ? '🗓 Tilføjet!' : '🗓 Madplan'}
             </button>
             {user && recipe.user_id === user.id && (
               <>
@@ -268,6 +280,47 @@ export default function RecipePage() {
           </div>
         )}
       </div>
+
+      {/* Madplan modal */}
+      {showMealPicker && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-serif text-lg text-stone-800">Tilføj til madplan</h2>
+              <button onClick={() => setShowMealPicker(false)} className="text-stone-400 hover:text-stone-600">✕</button>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Dato</label>
+              <input
+                type="date"
+                value={mealDate}
+                onChange={e => setMealDate(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Måltid</label>
+              <div className="flex gap-2 flex-wrap">
+                {mealTypes.map(type => (
+                  <button
+                    key={type}
+                    onClick={() => setMealType(type)}
+                    className={`text-sm px-4 py-2 rounded-xl border font-medium ${mealType === type ? 'bg-green-900 text-white border-green-900' : 'border-stone-200 text-stone-500 hover:border-stone-400'}`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button onClick={addToMealPlan} className="w-full bg-green-900 text-white rounded-xl py-3 text-sm font-medium hover:bg-green-800">
+              Tilføj til madplan
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
