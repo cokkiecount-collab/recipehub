@@ -10,6 +10,7 @@ export default function MealPlan() {
   const [showPicker, setShowPicker] = useState(null as any)
   const [search, setSearch] = useState('')
   const [weekOffset, setWeekOffset] = useState(0)
+  const [selectedDay, setSelectedDay] = useState(0)
 
   const mealTypes = ['Morgenmad', 'Frokost', 'Aftensmad', 'Snack']
 
@@ -28,10 +29,16 @@ export default function MealPlan() {
 
   const days = getWeekDays()
   const dayNames = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag', 'Søndag']
+  const dayNamesShort = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn']
 
   function formatDate(d: Date) {
     return d.toISOString().split('T')[0]
   }
+
+  useEffect(() => {
+    const todayIndex = new Date().getDay()
+    setSelectedDay(todayIndex === 0 ? 6 : todayIndex - 1)
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -45,6 +52,10 @@ export default function MealPlan() {
     }
     load()
   }, [])
+
+  useEffect(() => {
+    if (user) loadMealPlan(user.id)
+  }, [weekOffset])
 
   async function loadMealPlan(userId: string) {
     const start = formatDate(days[0])
@@ -99,9 +110,9 @@ export default function MealPlan() {
 
   return (
     <main className="min-h-screen bg-stone-50">
-      <nav className="bg-white border-b border-stone-200 px-6 py-4 flex items-center gap-4">
+      <nav className="bg-white border-b border-stone-200 px-4 py-4 flex items-center gap-3">
         <a href="/feed" className="text-stone-400 hover:text-stone-600 text-sm">← Feed</a>
-        <h1 className="font-serif text-2xl text-green-900">🗓 Madplan</h1>
+        <h1 className="font-serif text-xl text-green-900">🗓 Madplan</h1>
         <div className="flex-1" />
         <button
           onClick={() => {
@@ -109,28 +120,98 @@ export default function MealPlan() {
             if (list.length === 0) { alert('Ingen ingredienser i madplanen endnu'); return }
             alert('Indkøbsliste:\n\n' + list.join('\n'))
           }}
-          className="border border-green-900 text-green-900 rounded-xl px-4 py-2 text-sm font-medium hover:bg-green-50"
+          className="border border-green-900 text-green-900 rounded-xl px-3 py-2 text-xs font-medium hover:bg-green-50"
         >
           🛒 Indkøbsliste
         </button>
       </nav>
 
-      <div className="max-w-6xl mx-auto px-6 py-6">
+      <div className="max-w-6xl mx-auto px-4 py-4">
 
         {/* Uge navigation */}
-        <div className="flex items-center gap-4 mb-6">
-          <button onClick={() => setWeekOffset(weekOffset - 1)} className="border border-stone-200 rounded-xl px-4 py-2 text-sm bg-white hover:bg-stone-50">← Forrige uge</button>
+        <div className="flex items-center gap-2 mb-4">
+          <button onClick={() => setWeekOffset(weekOffset - 1)} className="border border-stone-200 rounded-xl px-3 py-2 text-xs bg-white hover:bg-stone-50">← Forrige</button>
           <div className="flex-1 text-center">
-            <span className="text-sm font-medium text-stone-600">
-              {days[0].toLocaleDateString('da-DK', { day: 'numeric', month: 'long' })} — {days[6].toLocaleDateString('da-DK', { day: 'numeric', month: 'long', year: 'numeric' })}
+            <span className="text-xs font-medium text-stone-600">
+              {days[0].toLocaleDateString('da-DK', { day: 'numeric', month: 'long' })} — {days[6].toLocaleDateString('da-DK', { day: 'numeric', month: 'long' })}
             </span>
           </div>
-          <button onClick={() => setWeekOffset(weekOffset + 1)} className="border border-stone-200 rounded-xl px-4 py-2 text-sm bg-white hover:bg-stone-50">Næste uge →</button>
-          {weekOffset !== 0 && <button onClick={() => setWeekOffset(0)} className="text-sm text-green-900 hover:underline">I dag</button>}
+          <button onClick={() => setWeekOffset(weekOffset + 1)} className="border border-stone-200 rounded-xl px-3 py-2 text-xs bg-white hover:bg-stone-50">Næste →</button>
+          {weekOffset !== 0 && <button onClick={() => setWeekOffset(0)} className="text-xs text-green-900 hover:underline">I dag</button>}
         </div>
 
-        {/* Kalender grid */}
-        <div className="grid grid-cols-7 gap-3">
+        {/* MOBIL: Dag-tabs + enkelt dag visning */}
+        <div className="md:hidden">
+          <div className="flex gap-1 mb-4 overflow-x-auto pb-1">
+            {days.map((day, i) => {
+              const isToday = formatDate(new Date()) === formatDate(day)
+              const hasMeals = getMealsForDay(formatDate(day)).length > 0
+              return (
+                <button
+                  key={i}
+                  onClick={() => setSelectedDay(i)}
+                  className={`flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-xl border text-xs font-medium transition-colors ${selectedDay === i ? 'bg-green-900 text-white border-green-900' : isToday ? 'border-green-400 text-green-700 bg-green-50' : 'border-stone-200 bg-white text-stone-500'}`}
+                >
+                  <span>{dayNamesShort[i]}</span>
+                  <span className="text-base font-serif">{day.getDate()}</span>
+                  {hasMeals && <span className={`w-1.5 h-1.5 rounded-full mt-0.5 ${selectedDay === i ? 'bg-white' : 'bg-orange-400'}`} />}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Valgt dag på mobil */}
+          {(() => {
+            const day = days[selectedDay]
+            const dateStr = formatDate(day)
+            const meals = getMealsForDay(dateStr)
+            const isToday = formatDate(new Date()) === dateStr
+            return (
+              <div className={`bg-white rounded-2xl border ${isToday ? 'border-green-400' : 'border-stone-200'} p-4`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className={`text-xs font-medium uppercase tracking-wide ${isToday ? 'text-green-700' : 'text-stone-400'}`}>{dayNames[selectedDay]}</p>
+                    <p className={`text-2xl font-serif ${isToday ? 'text-green-900' : 'text-stone-700'}`}>{day.getDate()} {day.toLocaleDateString('da-DK', { month: 'long' })}</p>
+                  </div>
+                  <button
+                    onClick={() => setShowPicker({ date: dateStr, mealType: 'Aftensmad' })}
+                    className="bg-green-900 text-white rounded-xl px-4 py-2 text-sm font-medium hover:bg-green-800"
+                  >
+                    + Tilføj
+                  </button>
+                </div>
+
+                {meals.length === 0 && (
+                  <p className="text-stone-300 text-sm text-center py-6">Ingen måltider planlagt</p>
+                )}
+
+                <div className="space-y-3">
+                  {mealTypes.map(type => {
+                    const typeMeals = meals.filter(m => m.meal_type === type)
+                    if (typeMeals.length === 0) return null
+                    return (
+                      <div key={type}>
+                        <p className="text-xs font-medium text-stone-400 uppercase tracking-wide mb-1">{type}</p>
+                        {typeMeals.map(meal => (
+                          <div key={meal.id} className="bg-orange-50 rounded-xl p-3 flex items-center gap-3 group">
+                            {meal.recipes?.image_url && <img src={meal.recipes.image_url} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />}
+                            <p className="text-sm text-stone-700 font-medium flex-1 cursor-pointer hover:text-green-900" onClick={() => window.location.href = `/recipe/${meal.recipe_id}`}>
+                              {meal.recipes?.title}
+                            </p>
+                            <button onClick={() => removeFromMealPlan(meal.id)} className="text-stone-300 hover:text-red-400 text-lg flex-shrink-0">✕</button>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })()}
+        </div>
+
+        {/* DESKTOP: 7 kolonner */}
+        <div className="hidden md:grid grid-cols-7 gap-3">
           {days.map((day, i) => {
             const dateStr = formatDate(day)
             const meals = getMealsForDay(dateStr)
@@ -179,7 +260,7 @@ export default function MealPlan() {
               <button onClick={() => setShowPicker(null)} className="text-stone-400 hover:text-stone-600">✕</button>
             </div>
 
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-2 mb-4 flex-wrap">
               {mealTypes.map(type => (
                 <button
                   key={type}
