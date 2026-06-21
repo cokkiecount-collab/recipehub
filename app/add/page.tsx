@@ -91,6 +91,8 @@ export default function AddRecipe() {
         .getPublicUrl(fileName)
 
       image_url = urlData.publicUrl
+    } else if (preview && preview.startsWith('http')) {
+      image_url = preview
     }
 
     const { error } = await supabase.from('recipes').insert({
@@ -141,4 +143,55 @@ export default function AddRecipe() {
         <div>
           <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Billede</label>
           {preview && <img src={preview} className="w-full h-48 object-cover rounded-xl mb-3" />}
-          <input
+          <input type="file" accept="image/*" onChange={handleImage} className="text-sm text-stone-500" />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Titel *</label>
+          <input name="title" value={form.title} onChange={handleChange} placeholder="fx Pasta carbonara" className={inputClass} />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Beskrivelse</label>
+          <textarea name="description" value={form.description} onChange={handleChange} placeholder="Kort beskrivelse af opskriften..." rows={3} className={inputClass + " resize-none"} />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Kategori</label>
+            <select name="category" value={form.category} onChange={handleChange} className={inputClass}>
+              <option value="">Vælg kategori</option>
+              <option>Aftensmad</option>
+              <option>Morgenmad</option>
+              <option>Frokost</option>
+              <option>Dessert</option>
+              <option>Snacks</option>
+              <option>Bagværk</option>
+              <option>Vegetar</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Tilberedningstid</label>
+            <input name="cook_time" value={form.cook_time} onChange={handleChange} placeholder="fx 30 min" className={inputClass} />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Ingredienser</label>
+          <textarea name="ingredients" value={form.ingredients} onChange={handleChange} placeholder="fx 200g pasta, 2 æg, 100g pancetta..." rows={5} className={inputClass + " resize-none"} />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Fremgangsmåde</label>
+          <textarea name="instructions" value={form.instructions} onChange={handleChange} placeholder="Beskriv trin for trin hvordan opskriften laves..." rows={8} className={inputClass + " resize-none"} />
+        </div>
+
+        {message && <p className="text-sm text-red-600 bg-red-50 p-3 rounded-xl">{message}</p>}
+
+        <button onClick={handleSubmit} disabled={loading} className="w-full bg-green-900 text-white rounded-xl py-3 text-sm font-medium hover:bg-green-800 disabled:opacity-50">
+          {loading ? 'Gemmer...' : 'Gem opskrift'}
+        </button>
+      </div>
+    </main>
+  )
+}
