@@ -27,7 +27,7 @@ const [importing, setImporting] = useState(false)
     load()
   }, [])
 
-  function handleChange(e) {
+  function handleChange(e: any) {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 async function handleImport() {
@@ -55,7 +55,7 @@ async function handleImport() {
   }
   setImporting(false)
 }
-  function handleImage(e) {
+  function handleImage(e: any) {
     const file = e.target.files[0]
     if (file) {
       setImage(file)
