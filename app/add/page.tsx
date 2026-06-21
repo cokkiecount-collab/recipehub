@@ -14,10 +14,11 @@ export default function AddRecipe() {
     category: '',
     cook_time: '',
   })
-  const [image, setImage] = useState(null)
-  const [preview, setPreview] = useState(null)
+  const [image, setImage] = useState(null as any)
+  const [preview, setPreview] = useState(null as any)
   const [importUrl, setImportUrl] = useState('')
-const [importing, setImporting] = useState(false)
+  const [importing, setImporting] = useState(false)
+
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -30,31 +31,33 @@ const [importing, setImporting] = useState(false)
   function handleChange(e: any) {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
-async function handleImport() {
-  if (!importUrl) return
-  setImporting(true)
-  try {
-    const res = await fetch('/api/import', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: importUrl })
-    })
-    const data = await res.json()
-    if (data.error) { alert('Kunne ikke hente opskriften — prøv en anden side'); return }
-    setForm({
-      title: data.title || '',
-      description: data.description || '',
-      ingredients: data.ingredients || '',
-      instructions: data.instructions || '',
-      category: '',
-      cook_time: '',
-    })
-    if (data.image_url) setPreview(data.image_url)
-  } catch {
-    alert('Noget gik galt — prøv igen')
+
+  async function handleImport() {
+    if (!importUrl) return
+    setImporting(true)
+    try {
+      const res = await fetch('/api/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: importUrl })
+      })
+      const data = await res.json()
+      if (data.error) { alert('Kunne ikke hente opskriften — prøv en anden side'); return }
+      setForm({
+        title: data.title || '',
+        description: data.description || '',
+        ingredients: data.ingredients || '',
+        instructions: data.instructions || '',
+        category: '',
+        cook_time: data.cook_time || '',
+      })
+      if (data.image_url) setPreview(data.image_url)
+    } catch {
+      alert('Noget gik galt — prøv igen')
+    }
+    setImporting(false)
   }
-  setImporting(false)
-}
+
   function handleImage(e: any) {
     const file = e.target.files[0]
     if (file) {
@@ -105,6 +108,8 @@ async function handleImport() {
     setLoading(false)
   }
 
+  const inputClass = "w-full border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-800 text-stone-800 bg-white placeholder-stone-300"
+
   return (
     <main className="min-h-screen bg-stone-50">
       <nav className="bg-white border-b border-stone-200 px-6 py-4 flex items-center gap-4">
@@ -113,14 +118,15 @@ async function handleImport() {
       </nav>
 
       <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
-<div className="bg-orange-50 border border-orange-200 rounded-2xl p-5">
+
+        <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5">
           <p className="text-sm font-medium text-orange-800 mb-3">🔗 Importer fra link</p>
           <div className="flex gap-2">
             <input
               value={importUrl}
               onChange={e => setImportUrl(e.target.value)}
               placeholder="fx https://www.arla.dk/opskrifter/..."
-              className="flex-1 border border-orange-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-orange-400 bg-white"
+              className="flex-1 border border-orange-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-orange-400 bg-white text-stone-800 placeholder-orange-300"
             />
             <button
               onClick={handleImport}
@@ -131,58 +137,8 @@ async function handleImport() {
             </button>
           </div>
         </div>
+
         <div>
           <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Billede</label>
           {preview && <img src={preview} className="w-full h-48 object-cover rounded-xl mb-3" />}
-          <input type="file" accept="image/*" onChange={handleImage} className="text-sm text-stone-500" />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Titel *</label>
-          <input name="title" value={form.title} onChange={handleChange} placeholder="fx Pasta carbonara" className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-800" />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Beskrivelse</label>
-          <textarea name="description" value={form.description} onChange={handleChange} placeholder="Kort beskrivelse af opskriften..." rows={3} className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-800 resize-none" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Kategori</label>
-            <select name="category" value={form.category} onChange={handleChange} className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-800">
-              <option value="">Vælg kategori</option>
-              <option>Aftensmad</option>
-              <option>Morgenmad</option>
-              <option>Frokost</option>
-              <option>Dessert</option>
-              <option>Snacks</option>
-              <option>Bagværk</option>
-              <option>Vegetar</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Tilberedningstid</label>
-            <input name="cook_time" value={form.cook_time} onChange={handleChange} placeholder="fx 30 min" className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-800" />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Ingredienser</label>
-          <textarea name="ingredients" value={form.ingredients} onChange={handleChange} placeholder="fx 200g pasta, 2 æg, 100g pancetta..." rows={5} className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-800 resize-none" />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Fremgangsmåde</label>
-          <textarea name="instructions" value={form.instructions} onChange={handleChange} placeholder="Beskriv trin for trin hvordan opskriften laves..." rows={8} className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-800 resize-none" />
-        </div>
-
-        {message && <p className="text-sm text-red-600 bg-red-50 p-3 rounded-xl">{message}</p>}
-
-        <button onClick={handleSubmit} disabled={loading} className="w-full bg-green-900 text-white rounded-xl py-3 text-sm font-medium hover:bg-green-800 disabled:opacity-50">
-          {loading ? 'Gemmer...' : 'Gem opskrift'}
-        </button>
-      </div>
-    </main>
-  )
-}
+          <input
