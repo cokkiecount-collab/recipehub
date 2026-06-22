@@ -20,6 +20,10 @@ export default function RecipePage() {
   const [mealDate, setMealDate] = useState(new Date().toISOString().split('T')[0])
   const [mealType, setMealType] = useState('Aftensmad')
   const [mealAdded, setMealAdded] = useState(false)
+  const [userRating, setUserRating] = useState(0)
+  const [avgRating, setAvgRating] = useState(0)
+  const [ratingCount, setRatingCount] = useState(0)
+  const [hoverRating, setHoverRating] = useState(0)
 
   const mealTypes = ['Morgenmad', 'Frokost', 'Aftensmad', 'Snack']
 
@@ -36,10 +40,38 @@ export default function RecipePage() {
       setServings(base)
       const { data: saved } = await supabase.from('saved_recipes').select('*').eq('user_id', user.id).eq('recipe_id', id).single()
       setSaved(!!saved)
+      const { data: ratings } = await supabase.from('ratings').select('rating').eq('recipe_id', id)
+      if (ratings && ratings.length > 0) {
+        setAvgRating(ratings.reduce((a: number, b: any) => a + b.rating, 0) / ratings.length)
+        setRatingCount(ratings.length)
+      }
+      const { data: myRating } = await supabase.from('ratings').select('rating').eq('recipe_id', id).eq('user_id', user.id).single()
+      if (myRating) setUserRating(myRating.rating)
       setLoading(false)
     }
     load()
   }, [id])
+
+  async function rateRecipe(rating: number) {
+    if (userRating === rating) {
+      await supabase.from('ratings').delete().eq('recipe_id', id).eq('user_id', user.id)
+      setUserRating(0)
+    } else if (userRating > 0) {
+      await supabase.from('ratings').update({ rating }).eq('recipe_id', id).eq('user_id', user.id)
+      setUserRating(rating)
+    } else {
+      await supabase.from('ratings').insert({ recipe_id: id, user_id: user.id, rating })
+      setUserRating(rating)
+    }
+    const { data: ratings } = await supabase.from('ratings').select('rating').eq('recipe_id', id)
+    if (ratings && ratings.length > 0) {
+      setAvgRating(ratings.reduce((a: number, b: any) => a + b.rating, 0) / ratings.length)
+      setRatingCount(ratings.length)
+    } else {
+      setAvgRating(0)
+      setRatingCount(0)
+    }
+  }
 
   async function toggleSave() {
     if (saved) {
@@ -133,7 +165,7 @@ export default function RecipePage() {
   if (!recipe) return <div className="min-h-screen bg-stone-50 flex items-center justify-center"><p className="text-stone-400">Opskrift ikke fundet</p></div>
 
   const ingredients = recipe.ingredients ? recipe.ingredients.split('\n').filter((l: string) => l.trim()) : []
-  const steps = recipe.instructions ? recipe.instructions.split('\n').filter((l: string) => l.trim()) : []
+  const steps = recipe.instructions ? recipe.instructions.split('\n').filter((l: string) => l.trim()).map((l: string) => l.replace(/^\d+[\.\)\:\-]?\s*/, '').trim()) : []
   const isOwner = user && recipe.user_id === user.id
 
   return (
@@ -161,6 +193,27 @@ export default function RecipePage() {
               {recipe.category && <span className="text-xs bg-orange-50 text-orange-700 px-3 py-1 rounded-full">{recipe.category}</span>}
               {recipe.cook_time && <span className="text-xs bg-stone-100 text-stone-600 px-3 py-1 rounded-full">⏱ {recipe.cook_time}</span>}
               {recipe.is_public ? <span className="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-full">🌍 Delt</span> : <span className="text-xs bg-stone-100 text-stone-500 px-3 py-1 rounded-full">🔒 Privat</span>}
+            </div>
+
+            {/* Stjerne rating */}
+            <div className="bg-white border border-stone-200 rounded-2xl p-4 mb-6 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-stone-700">Din vurdering</p>
+                {ratingCount > 0 && <p className="text-xs text-stone-400 mt-0.5">Gennemsnit: {avgRating.toFixed(1)} ⭐ ({ratingCount} {ratingCount === 1 ? 'vurdering' : 'vurderinger'})</p>}
+              </div>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button
+                    key={star}
+                    onClick={() => rateRecipe(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="text-2xl transition-transform hover:scale-110"
+                  >
+                    {star <= (hoverRating || userRating) ? '⭐' : '☆'}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="flex gap-2 flex-wrap mb-6">
@@ -225,7 +278,6 @@ export default function RecipePage() {
           </>
         ) : (
           <div className="space-y-5">
-            {/* Billede upload */}
             <label className="block cursor-pointer">
               <div className={`border-2 border-dashed rounded-2xl transition-colors ${form.image_url ? 'border-green-300' : 'border-stone-300 hover:border-green-400'}`}>
                 {form.image_url ? (
@@ -243,10 +295,7 @@ export default function RecipePage() {
                   </div>
                 )}
               </div>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
+              <input type="file" accept="image/*" className="hidden"
                 onChange={async (e: any) => {
                   const file = e.target.files[0]
                   if (!file) return
@@ -259,7 +308,6 @@ export default function RecipePage() {
                 }}
               />
             </label>
-
             <div>
               <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Titel</label>
               <input name="title" value={form.title} onChange={handleChange} className={inputClass} />
