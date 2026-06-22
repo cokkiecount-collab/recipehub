@@ -70,16 +70,22 @@ export default function ShoppingList() {
       })
       if (mealPlanIngredients.length === 0) { alert('Ingen ingredienser fundet i madplanen'); setImporting(false); return }
 
-      // Brug kun madplan ingredienser — start frisk hver gang
-      const allIngredients = [...mealPlanIngredients]
+      // Hent eksisterende manuelle varer (ikke fra madplan)
+      const manualItems = items.filter(i => !i.from_meal_plan).map(i => i.item)
 
-      // Send alle til Claude for at slå sammen
+      // Kombiner manuelle varer + madplan ingredienser og send til Claude
+      const allIngredients = [...manualItems, ...mealPlanIngredients]
       const res = await fetch('/api/merge-ingredients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ingredients: allIngredients }) })
       const data = await res.json()
       if (data.error) { alert('Kunne ikke slå ingredienser sammen'); setImporting(false); return }
 
-      // Slet hele listen og erstat med den sammenslutte
-      await supabase.from('shopping_list').delete().eq('user_id', user.id)
+      // Slet kun gamle madplan varer og erstat med nye
+      await supabase.from('shopping_list').delete().eq('user_id', user.id).eq('from_meal_plan', true)
+
+      // Slet også manuelle varer da de nu er slået sammen
+      await supabase.from('shopping_list').delete().eq('user_id', user.id).eq('from_meal_plan', false)
+
+      // Tilføj den sammenslutte liste
       await supabase.from('shopping_list').insert(data.merged.map((item: string) => ({ user_id: user.id, item, from_meal_plan: true })))
       await loadItems(user.id)
     } catch { alert('Noget gik galt — prøv igen') }
