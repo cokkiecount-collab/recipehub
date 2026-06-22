@@ -172,8 +172,7 @@ export default function MealPlan() {
         <a href="/feed" className="text-stone-600 hover:text-stone-800 text-sm font-medium">← Feed</a>
         <h1 className="font-serif text-xl text-green-900">🗓 Madplan</h1>
         <div className="flex-1" />
-        <button
-          <a href="/shopping" className="border border-green-900 text-green-900 rounded-xl px-3 py-2 text-xs font-medium hover:bg-green-50">
+        <a href="/shopping" className="border border-green-900 text-green-900 rounded-xl px-3 py-2 text-xs font-medium hover:bg-green-50">
           🛒 Indkøbsliste
         </a>
       </nav>
