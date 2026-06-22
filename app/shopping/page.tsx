@@ -34,10 +34,7 @@ export default function ShoppingList() {
   async function addItem() {
     if (!newItem.trim()) return
     setAdding(true)
-    await supabase.from('shopping_list').insert({
-      user_id: user.id,
-      item: newItem.trim(),
-    })
+    await supabase.from('shopping_list').insert({ user_id: user.id, item: newItem.trim() })
     setNewItem('')
     await loadItems(user.id)
     setAdding(false)
@@ -60,31 +57,24 @@ export default function ShoppingList() {
 
   async function importFromMealPlan() {
     setImporting(true)
-
-    // Hent madplan for denne uge
     const now = new Date()
     const monday = new Date(now)
     monday.setDate(now.getDate() - now.getDay() + 1)
     const sunday = new Date(monday)
     sunday.setDate(monday.getDate() + 6)
-
     const start = monday.toISOString().split('T')[0]
     const end = sunday.toISOString().split('T')[0]
-
     const { data: mealPlan } = await supabase
       .from('meal_plans')
       .select('*, recipes(*)')
       .eq('user_id', user.id)
       .gte('planned_date', start)
       .lte('planned_date', end)
-
     if (!mealPlan || mealPlan.length === 0) {
       alert('Ingen opskrifter i madplanen denne uge')
       setImporting(false)
       return
     }
-
-    // Saml alle ingredienser
     const allIngredients: string[] = []
     mealPlan.forEach(m => {
       if (m.recipes?.ingredients) {
@@ -93,29 +83,19 @@ export default function ShoppingList() {
         })
       }
     })
-
-    // Fjern duplikater — sammenlign kun selve ingrediensnavnet
     const existing = items.map(i => i.item.toLowerCase())
     const unique = allIngredients.filter(ing => {
-      const clean = ing.toLowerCase().replace(/[\d.,]+\s*(g|kg|ml|l|dl|cl|spsk|tsk|stk|fed|blade|nip|bundt|pose|dåse|pakke|skive|stykke|skiver)\s*/gi, '').trim()
+      const clean = ing.toLowerCase().replace(/[\d.,]+\s*(g|kg|ml|l|dl|cl|spsk|tsk|stk|fed|blade|nip|bundt|pose|dase|pakke|skive|stykke)\s*/gi, '').trim()
       return !existing.some(e => e.includes(clean) || clean.includes(e))
     })
-
     if (unique.length === 0) {
       alert('Alle ingredienser er allerede på listen!')
       setImporting(false)
       return
     }
-
-    // Tilføj til indkøbsliste
     await supabase.from('shopping_list').insert(
-      unique.map(item => ({
-        user_id: user.id,
-        item,
-        from_meal_plan: true,
-      }))
+      unique.map(item => ({ user_id: user.id, item, from_meal_plan: true }))
     )
-
     await loadItems(user.id)
     setImporting(false)
   }
@@ -129,18 +109,15 @@ export default function ShoppingList() {
     <main className="min-h-screen bg-stone-50">
       <nav className="bg-white border-b border-stone-200 px-4 py-4 flex items-center gap-3">
         <a href="/feed" className="text-stone-600 hover:text-stone-800 text-sm font-medium">← Feed</a>
-        <h1 className="font-serif text-xl text-green-900">🛒 Indkøbsliste</h1>
+        <h1 className="font-serif text-xl text-green-900">Indkøbsliste</h1>
         <div className="flex-1" />
         {checked.length > 0 && (
-          <button onClick={clearChecked} className="text-xs text-red-400 hover:text-red-600 font-medium">
-            Slet afkrydsede
-          </button>
+          <button onClick={clearChecked} className="text-xs text-red-400 hover:text-red-600 font-medium">Slet afkrydsede</button>
         )}
       </nav>
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
 
-        {/* Tilføj ny vare */}
         <div className="flex gap-2">
           <input
             value={newItem}
@@ -158,13 +135,12 @@ export default function ShoppingList() {
           </button>
         </div>
 
-        {/* Hent fra madplan */}
         <button
           onClick={importFromMealPlan}
           disabled={importing}
           className="w-full border border-green-900 text-green-900 rounded-xl py-3 text-sm font-medium hover:bg-green-50 disabled:opacity-50"
         >
-          {importing ? 'Henter...' : '🗓 Hent ingredienser fra ugens madplan'}
+          {importing ? 'Henter...' : 'Hent ingredienser fra ugens madplan'}
         </button>
 
         {items.length === 0 && (
@@ -174,7 +150,6 @@ export default function ShoppingList() {
           </div>
         )}
 
-        {/* Ikke afkrydsede */}
         {unchecked.length > 0 && (
           <div className="bg-white rounded-2xl border border-stone-200 divide-y divide-stone-100">
             {unchecked.map(item => (
@@ -184,17 +159,33 @@ export default function ShoppingList() {
                   className="w-6 h-6 rounded-full border-2 border-stone-300 flex items-center justify-center flex-shrink-0 hover:border-green-700 transition-colors"
                 />
                 <span className="text-sm text-stone-700 flex-1">{item.item}</span>
-                {item.from_meal_plan && <span className="text-xs text-stone-300">🗓</span>}
+                {item.from_meal_plan && <span className="text-xs text-stone-300">madplan</span>}
                 <button onClick={() => deleteItem(item.id)} className="text-stone-200 hover:text-red-400 text-lg flex-shrink-0">✕</button>
               </div>
             ))}
           </div>
         )}
 
-        {/* Afkrydsede */}
         {checked.length > 0 && (
           <div>
             <p className="text-xs font-medium text-stone-400 uppercase tracking-wide mb-2">I kurven ({checked.length})</p>
             <div className="bg-white rounded-2xl border border-stone-100 divide-y divide-stone-50">
               {checked.map(item => (
                 <div key={item.id} className="flex items-center gap-3 px-4 py-3">
+                  <button
+                    onClick={() => toggleItem(item.id, item.checked)}
+                    className="w-6 h-6 rounded-full bg-green-900 border-2 border-green-900 flex items-center justify-center flex-shrink-0"
+                  >
+                    <span className="text-white text-xs">✓</span>
+                  </button>
+                  <span className="text-sm text-stone-300 line-through flex-1">{item.item}</span>
+                  <button onClick={() => deleteItem(item.id)} className="text-stone-200 hover:text-red-400 text-lg flex-shrink-0">✕</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
+  )
+}
