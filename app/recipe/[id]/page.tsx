@@ -59,7 +59,7 @@ export default function RecipePage() {
   async function loadComments() {
     const { data } = await supabase
       .from('comments')
-      .select('*, profiles:user_id(email)')
+      .select('*')
       .eq('recipe_id', id)
       .order('created_at', { ascending: true })
     setComments(data || [])
@@ -68,9 +68,15 @@ export default function RecipePage() {
   async function postComment() {
     if (!newComment.trim()) return
     setPostingComment(true)
-    await supabase.from('comments').insert({ recipe_id: id, user_id: user.id, comment: newComment.trim() })
-    setNewComment('')
-    await loadComments()
+    const { error } = await supabase.from('comments').insert({
+      recipe_id: id,
+      user_id: user.id,
+      comment: newComment.trim()
+    })
+    if (!error) {
+      setNewComment('')
+      await loadComments()
+    }
     setPostingComment(false)
   }
 
@@ -298,8 +304,10 @@ export default function RecipePage() {
             )}
 
             {/* Kommentarer */}
-            <div className="mt-8">
-              <h2 className="font-serif text-xl text-stone-800 mb-4">Kommentarer {comments.length > 0 && <span className="text-stone-400 text-base">({comments.length})</span>}</h2>
+            <div className="mt-4">
+              <h2 className="font-serif text-xl text-stone-800 mb-4">
+                Kommentarer {comments.length > 0 && <span className="text-stone-400 text-base">({comments.length})</span>}
+              </h2>
 
               {comments.length === 0 && (
                 <p className="text-stone-400 text-sm mb-4">Ingen kommentarer endnu — vær den første!</p>
@@ -311,9 +319,11 @@ export default function RecipePage() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-xs font-medium text-orange-700">
-                          {c.profiles?.email?.[0].toUpperCase() || '?'}
+                          {c.user_id === user.id ? user.email?.[0].toUpperCase() : '👤'}
                         </div>
-                        <span className="text-xs text-stone-500">{c.profiles?.email?.split('@')[0]}</span>
+                        <span className="text-xs text-stone-500">
+                          {c.user_id === user.id ? user.email?.split('@')[0] : 'Bruger'}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-stone-300">{new Date(c.created_at).toLocaleDateString('da-DK')}</span>
