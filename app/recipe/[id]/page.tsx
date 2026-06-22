@@ -77,8 +77,10 @@ export default function RecipePage() {
       is_public: form.is_public,
     }).eq('id', id)
     if (!error) {
-      setRecipe(form)
-      const newBase = form.servings ? parseInt(form.servings) : 4
+      const { data: updated } = await supabase.from('recipes').select('*').eq('id', id).single()
+      setRecipe(updated)
+      setForm(updated)
+      const newBase = updated?.servings || 4
       setBaseServings(newBase)
       setServings(newBase)
       setEditing(false)
