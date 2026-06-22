@@ -6,6 +6,7 @@ export default function AddRecipe() {
   const [user, setUser] = useState(null as any)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [isPublic, setIsPublic] = useState(false)
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -13,6 +14,7 @@ export default function AddRecipe() {
     instructions: '',
     category: '',
     cook_time: '',
+    servings: '4',
   })
   const [image, setImage] = useState(null as any)
   const [preview, setPreview] = useState(null as any)
@@ -50,6 +52,7 @@ export default function AddRecipe() {
         instructions: data.instructions || '',
         category: '',
         cook_time: data.cook_time || '',
+        servings: '4',
       })
       if (data.image_url) setPreview(data.image_url)
     } catch {
@@ -99,6 +102,7 @@ export default function AddRecipe() {
       ...form,
       image_url,
       user_id: user.id,
+      is_public: isPublic,
     })
 
     if (error) {
@@ -115,7 +119,7 @@ export default function AddRecipe() {
   return (
     <main className="min-h-screen bg-stone-50">
       <nav className="bg-white border-b border-stone-200 px-6 py-4 flex items-center gap-4">
-        <a href="/feed" className="text-stone-400 hover:text-stone-600 text-sm">← Tilbage</a>
+        <a href="/feed" className="text-stone-600 hover:text-stone-800 text-sm font-medium">← Tilbage</a>
         <h1 className="font-serif text-2xl text-green-900">Tilføj opskrift</h1>
       </nav>
 
@@ -156,7 +160,7 @@ export default function AddRecipe() {
           <textarea name="description" value={form.description} onChange={handleChange} placeholder="Kort beskrivelse af opskriften..." rows={3} className={inputClass + " resize-none"} />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Kategori</label>
             <select name="category" value={form.category} onChange={handleChange} className={inputClass}>
@@ -174,6 +178,10 @@ export default function AddRecipe() {
             <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Tilberedningstid</label>
             <input name="cook_time" value={form.cook_time} onChange={handleChange} placeholder="fx 30 min" className={inputClass} />
           </div>
+          <div>
+            <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Antal personer</label>
+            <input name="servings" type="number" min="1" value={form.servings} onChange={handleChange} placeholder="4" className={inputClass} />
+          </div>
         </div>
 
         <div>
@@ -184,6 +192,20 @@ export default function AddRecipe() {
         <div>
           <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Fremgangsmåde</label>
           <textarea name="instructions" value={form.instructions} onChange={handleChange} placeholder="Beskriv trin for trin hvordan opskriften laves..." rows={8} className={inputClass + " resize-none"} />
+        </div>
+
+        {/* Del med alle toggle */}
+        <div className="bg-white border border-stone-200 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-stone-800">Del med alle</p>
+            <p className="text-xs text-stone-400 mt-0.5">Andre brugere kan se denne opskrift i deres feed</p>
+          </div>
+          <button
+            onClick={() => setIsPublic(!isPublic)}
+            className={`w-12 h-6 rounded-full transition-colors relative ${isPublic ? 'bg-green-900' : 'bg-stone-200'}`}
+          >
+            <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isPublic ? 'translate-x-6' : 'translate-x-0.5'}`} />
+          </button>
         </div>
 
         {message && <p className="text-sm text-red-600 bg-red-50 p-3 rounded-xl">{message}</p>}

@@ -18,7 +18,11 @@ export default function Feed() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/'; return }
       setUser(user)
-      const { data } = await supabase.from('recipes').select('*').order('title', { ascending: true })
+      const { data } = await supabase
+        .from('recipes')
+        .select('*')
+        .or(`user_id.eq.${user.id},is_public.eq.true`)
+        .order('title', { ascending: true })
       setRecipes(data || [])
       setFiltered(data || [])
       setLoading(false)
@@ -59,8 +63,8 @@ export default function Feed() {
         <div className="flex-1" />
         <a href="/add" className="bg-green-900 text-white rounded-xl px-4 py-2 text-sm font-medium hover:bg-green-800">+ Tilføj</a>
         <a href="/mealplan" className="border border-green-900 text-green-900 rounded-xl px-4 py-2 text-sm font-medium hover:bg-green-50">🗓 Madplan</a>
-        <a href="/profile" className="text-stone-400 text-sm hover:text-stone-600">Min profil</a>
-        <button onClick={logout} className="text-stone-400 text-sm hover:text-stone-600">Log ud</button>
+        <a href="/profile" className="text-stone-600 text-sm font-medium hover:text-stone-800">Min profil</a>
+        <button onClick={logout} className="text-stone-600 text-sm font-medium hover:text-stone-800">Log ud</button>
       </nav>
 
       <div className="max-w-6xl mx-auto px-6 py-6">
@@ -73,7 +77,7 @@ export default function Feed() {
             placeholder="Søg efter opskrift..."
             className="flex-1 border border-stone-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-green-800 bg-white text-stone-800"
           />
-          <button onClick={() => setView(view === 'grid' ? 'list' : 'grid')} className="border border-stone-200 rounded-xl px-4 py-2.5 text-sm bg-white text-stone-500 hover:border-stone-400">
+          <button onClick={() => setView(view === 'grid' ? 'list' : 'grid')} className="border border-stone-200 rounded-xl px-4 py-2.5 text-sm bg-white text-stone-600 font-medium hover:border-stone-400">
             {view === 'grid' ? '☰ Kartotek' : '⊞ Grid'}
           </button>
         </div>
@@ -81,7 +85,7 @@ export default function Feed() {
         {/* Kategorier */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
           {categories.map(cat => (
-            <button key={cat} onClick={() => setCategory(cat)} className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${category === cat ? 'bg-green-900 text-white border-green-900' : 'bg-white text-stone-500 border-stone-200 hover:border-stone-400'}`}>
+            <button key={cat} onClick={() => setCategory(cat)} className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${category === cat ? 'bg-green-900 text-white border-green-900' : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'}`}>
               {cat}
             </button>
           ))}
@@ -89,7 +93,8 @@ export default function Feed() {
 
         {filtered.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-stone-400">Ingen opskrifter fundet</p>
+            <p className="text-stone-400 mb-4">Ingen opskrifter fundet</p>
+            <a href="/add" className="bg-green-900 text-white rounded-xl px-6 py-3 text-sm font-medium hover:bg-green-800">Tilføj din første opskrift</a>
           </div>
         )}
 
@@ -101,8 +106,14 @@ export default function Feed() {
                 {recipe.image_url ? <img src={recipe.image_url} alt={recipe.title} className="w-full object-cover" /> : <div className="w-full h-40 bg-stone-100 flex items-center justify-center text-4xl">🍽️</div>}
                 <div className="p-4">
                   <h2 className="font-serif text-base text-stone-800 mb-1">{recipe.title}</h2>
-                  {recipe.cook_time && <p className="text-xs text-stone-400">⏱ {recipe.cook_time}</p>}
-                  {recipe.category && <span className="inline-block mt-2 text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded-full">{recipe.category}</span>}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {recipe.cook_time && <p className="text-xs text-stone-400">⏱ {recipe.cook_time}</p>}
+                    {recipe.servings && <p className="text-xs text-stone-400">👤 {recipe.servings} pers.</p>}
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    {recipe.category && <span className="text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded-full">{recipe.category}</span>}
+                    {recipe.is_public && <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">Delt</span>}
+                  </div>
                 </div>
               </div>
             ))}
@@ -112,7 +123,6 @@ export default function Feed() {
         {/* Kartotek visning */}
         {view === 'list' && filtered.length > 0 && (
           <div>
-            {/* Alfabetisk navigation */}
             <div className="flex flex-wrap gap-1 mb-6">
               {alphabet.map(letter => {
                 const groups = groupedByLetter()
@@ -125,7 +135,6 @@ export default function Feed() {
               })}
             </div>
 
-            {/* Grupperet liste */}
             {Object.entries(groupedByLetter()).map(([letter, items]: any) => (
               <div key={letter} id={`letter-${letter}`} className="mb-6">
                 <h2 className="font-serif text-2xl text-green-900 mb-3 border-b border-stone-200 pb-2">{letter}</h2>
@@ -135,9 +144,11 @@ export default function Feed() {
                       {recipe.image_url ? <img src={recipe.image_url} alt={recipe.title} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" /> : <div className="w-14 h-14 rounded-xl bg-stone-100 flex items-center justify-center text-2xl flex-shrink-0">🍽️</div>}
                       <div className="flex-1">
                         <h3 className="font-serif text-base text-stone-800">{recipe.title}</h3>
-                        <div className="flex gap-2 mt-1">
+                        <div className="flex gap-2 mt-1 flex-wrap">
                           {recipe.category && <span className="text-xs bg-orange-50 text-orange-700 px-2 py-0.5 rounded-full">{recipe.category}</span>}
                           {recipe.cook_time && <span className="text-xs text-stone-400">⏱ {recipe.cook_time}</span>}
+                          {recipe.servings && <span className="text-xs text-stone-400">👤 {recipe.servings} pers.</span>}
+                          {recipe.is_public && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Delt</span>}
                         </div>
                       </div>
                     </div>
