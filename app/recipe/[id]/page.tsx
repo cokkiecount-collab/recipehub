@@ -152,7 +152,7 @@ export default function RecipePage() {
       </nav>
 
       <div className="max-w-2xl mx-auto px-4 py-6">
-        {recipe.image_url && <img src={recipe.image_url} alt={recipe.title} className="w-full h-64 object-cover rounded-2xl mb-6" />}
+        {recipe.image_url && !editing && <img src={recipe.image_url} alt={recipe.title} className="w-full h-64 object-cover rounded-2xl mb-6" />}
 
         {!editing ? (
           <>
@@ -225,13 +225,14 @@ export default function RecipePage() {
           </>
         ) : (
           <div className="space-y-5">
-<label className="block cursor-pointer">
-              <div className={`border-2 border-dashed rounded-2xl transition-colors ${form.image_url ? 'border-green-300 bg-green-50' : 'border-stone-300 bg-white hover:border-green-400 hover:bg-green-50'}`}>
+            {/* Billede upload */}
+            <label className="block cursor-pointer">
+              <div className={`border-2 border-dashed rounded-2xl transition-colors ${form.image_url ? 'border-green-300' : 'border-stone-300 hover:border-green-400'}`}>
                 {form.image_url ? (
                   <div className="relative">
                     <img src={form.image_url} className="w-full h-56 object-cover rounded-2xl" />
-                    <div className="absolute inset-0 bg-black bg-opacity-30 rounded-2xl flex items-center justify-center">
-                      <p className="text-white text-sm font-medium">Tryk for at skifte billede</p>
+                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-40 rounded-b-2xl py-2 text-center">
+                      <p className="text-white text-xs font-medium">Tryk for at skifte billede</p>
                     </div>
                   </div>
                 ) : (
@@ -252,13 +253,13 @@ export default function RecipePage() {
                   const fileExt = file.name.split('.').pop()
                   const fileName = `${Date.now()}.${fileExt}`
                   const { error } = await supabase.storage.from('recipe-images').upload(fileName, file)
-                  if (!error) {
-                    const { data: urlData } = supabase.storage.from('recipe-images').getPublicUrl(fileName)
-                    setForm({ ...form, image_url: urlData.publicUrl })
-                  }
+                  if (error) { alert('Fejl ved upload: ' + error.message); return }
+                  const { data: urlData } = supabase.storage.from('recipe-images').getPublicUrl(fileName)
+                  setForm({ ...form, image_url: urlData.publicUrl })
                 }}
               />
             </label>
+
             <div>
               <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Titel</label>
               <input name="title" value={form.title} onChange={handleChange} className={inputClass} />
@@ -279,9 +280,9 @@ export default function RecipePage() {
                   <option>Snacks</option>
                   <option>Bagværk</option>
                   <option>Vegetar</option>
-	          <option>Drinks</option>
-	 	     <option>Fine dining</option>
-		     <option>Syltning</option>
+                  <option>Drinks</option>
+                  <option>Fine dining</option>
+                  <option>Syltning</option>
                 </select>
               </div>
               <div>
