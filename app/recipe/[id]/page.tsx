@@ -75,6 +75,7 @@ export default function RecipePage() {
       cook_time: form.cook_time,
       servings: form.servings ? parseInt(form.servings) : null,
       is_public: form.is_public,
+      image_url: form.image_url,
     }).eq('id', id)
     if (!error) {
       const { data: updated } = await supabase.from('recipes').select('*').eq('id', id).single()
