@@ -173,15 +173,9 @@ export default function MealPlan() {
         <h1 className="font-serif text-xl text-green-900">🗓 Madplan</h1>
         <div className="flex-1" />
         <button
-          onClick={() => {
-            const list = getShoppingList()
-            if (list.length === 0) { alert('Ingen ingredienser i madplanen endnu'); return }
-            alert('Indkøbsliste:\n\n' + list.join('\n'))
-          }}
-          className="border border-green-900 text-green-900 rounded-xl px-3 py-2 text-xs font-medium hover:bg-green-50"
-        >
+          <a href="/shopping" className="border border-green-900 text-green-900 rounded-xl px-3 py-2 text-xs font-medium hover:bg-green-50">
           🛒 Indkøbsliste
-        </button>
+        </a>
       </nav>
 
       <div className="max-w-6xl mx-auto px-4 py-4">
