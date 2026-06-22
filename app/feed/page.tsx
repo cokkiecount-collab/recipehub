@@ -10,6 +10,7 @@ export default function Feed() {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('Alle')
   const [view, setView] = useState('grid')
+  const [showMenu, setShowMenu] = useState(false)
 
   const categories = ['Alle', 'Aftensmad', 'Morgenmad', 'Frokost', 'Dessert', 'Snacks', 'Bagværk', 'Vegetar']
 
@@ -57,18 +58,38 @@ export default function Feed() {
   if (loading) return <div className="min-h-screen bg-stone-50 flex items-center justify-center"><p className="text-stone-400">Indlæser...</p></div>
 
   return (
-    <main className="min-h-screen bg-stone-50">
-      <nav className="bg-white border-b border-stone-200 px-6 py-4 flex items-center gap-4">
+    <main className="min-h-screen bg-stone-50 pb-20 md:pb-0">
+
+      {/* DESKTOP navigation */}
+      <nav className="bg-white border-b border-stone-200 px-6 py-4 hidden md:flex items-center gap-4">
         <h1 className="font-serif text-2xl text-green-900">🍃 RecipeHub</h1>
         <div className="flex-1" />
         <a href="/add" className="bg-green-900 text-white rounded-xl px-4 py-2 text-sm font-medium hover:bg-green-800">+ Tilføj</a>
         <a href="/mealplan" className="border border-green-900 text-green-900 rounded-xl px-4 py-2 text-sm font-medium hover:bg-green-50">🗓 Madplan</a>
-<a href="/shopping" className="border border-green-900 text-green-900 rounded-xl px-4 py-2 text-sm font-medium hover:bg-green-50">🛒 Indkøb</a>
+        <a href="/shopping" className="border border-green-900 text-green-900 rounded-xl px-4 py-2 text-sm font-medium hover:bg-green-50">🛒 Indkøb</a>
         <a href="/profile" className="text-stone-600 text-sm font-medium hover:text-stone-800">Min profil</a>
         <button onClick={logout} className="text-stone-600 text-sm font-medium hover:text-stone-800">Log ud</button>
       </nav>
 
-      <div className="max-w-6xl mx-auto px-6 py-6">
+      {/* MOBIL top bar */}
+      <nav className="bg-white border-b border-stone-200 px-4 py-4 flex md:hidden items-center gap-3">
+        <h1 className="font-serif text-xl text-green-900">🍃 RecipeHub</h1>
+        <div className="flex-1" />
+        <a href="/add" className="bg-green-900 text-white rounded-xl px-3 py-2 text-sm font-medium hover:bg-green-800">+ Tilføj</a>
+        <button onClick={() => setShowMenu(!showMenu)} className="border border-stone-200 rounded-xl px-3 py-2 text-sm text-stone-600 font-medium">☰</button>
+      </nav>
+
+      {/* MOBIL dropdown menu */}
+      {showMenu && (
+        <div className="md:hidden bg-white border-b border-stone-200 px-4 py-3 flex flex-col gap-2">
+          <a href="/mealplan" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-stone-50 text-stone-700 font-medium text-sm">🗓 Madplan</a>
+          <a href="/shopping" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-stone-50 text-stone-700 font-medium text-sm">🛒 Indkøbsliste</a>
+          <a href="/profile" className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-stone-50 text-stone-700 font-medium text-sm">👤 Min profil</a>
+          <button onClick={logout} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-stone-50 text-red-500 font-medium text-sm text-left">← Log ud</button>
+        </div>
+      )}
+
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-6">
 
         {/* Søgning */}
         <div className="flex gap-3 mb-5">

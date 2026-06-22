@@ -52,12 +52,7 @@ export default function RecipePage() {
   }
 
   async function addToMealPlan() {
-    await supabase.from('meal_plans').insert({
-      user_id: user.id,
-      recipe_id: id,
-      planned_date: mealDate,
-      meal_type: mealType,
-    })
+    await supabase.from('meal_plans').insert({ user_id: user.id, recipe_id: id, planned_date: mealDate, meal_type: mealType })
     setShowMealPicker(false)
     setMealAdded(true)
     setTimeout(() => setMealAdded(false), 3000)
@@ -78,13 +73,14 @@ export default function RecipePage() {
       instructions: form.instructions,
       category: form.category,
       cook_time: form.cook_time,
-      servings: parseInt(form.servings) || 4,
+      servings: form.servings ? parseInt(form.servings) : null,
       is_public: form.is_public,
     }).eq('id', id)
     if (!error) {
       setRecipe(form)
-      setBaseServings(parseInt(form.servings) || 4)
-      setServings(parseInt(form.servings) || 4)
+      const newBase = form.servings ? parseInt(form.servings) : 4
+      setBaseServings(newBase)
+      setServings(newBase)
       setEditing(false)
     }
     setSaving(false)
@@ -110,10 +106,7 @@ export default function RecipePage() {
 
   function scaleAmount(text: string) {
     const ratio = servings / baseServings
-    const fractions: any = {
-      '½': 0.5, '⅓': 0.333, '⅔': 0.667,
-      '¼': 0.25, '¾': 0.75, '⅛': 0.125
-    }
+    const fractions: any = { '½': 0.5, '⅓': 0.333, '⅔': 0.667, '¼': 0.25, '¾': 0.75, '⅛': 0.125 }
     function formatNum(n: number) {
       if (n === 0.5) return '½'
       if (n === 0.25) return '¼'
@@ -123,18 +116,11 @@ export default function RecipePage() {
       if (n % 1 === 0) return n.toString()
       return n.toFixed(1).replace('.', ',')
     }
-    text = text.replace(/(\d+)\/(\d+)/g, (_: string, a: string, b: string) => {
-      const scaled = (parseInt(a) / parseInt(b)) * ratio
-      return formatNum(scaled)
-    })
+    text = text.replace(/(\d+)\/(\d+)/g, (_: string, a: string, b: string) => formatNum((parseInt(a) / parseInt(b)) * ratio))
     for (const [frac, val] of Object.entries(fractions)) {
-      const regex = new RegExp(frac, 'g')
-      text = text.replace(regex, formatNum(val * ratio))
+      text = text.replace(new RegExp(frac, 'g'), formatNum(val * ratio))
     }
-    text = text.replace(/(\d+([.,]\d+)?)/g, (match: string) => {
-      const num = parseFloat(match.replace(',', '.'))
-      return formatNum(num * ratio)
-    })
+    text = text.replace(/(\d+([.,]\d+)?)/g, (match: string) => formatNum(parseFloat(match.replace(',', '.')) * ratio))
     return text
   }
 
@@ -168,7 +154,6 @@ export default function RecipePage() {
         {!editing ? (
           <>
             <h1 className="font-serif text-3xl text-stone-800 mb-3">{recipe.title}</h1>
-
             <div className="flex gap-2 flex-wrap mb-4">
               {recipe.category && <span className="text-xs bg-orange-50 text-orange-700 px-3 py-1 rounded-full">{recipe.category}</span>}
               {recipe.cook_time && <span className="text-xs bg-stone-100 text-stone-600 px-3 py-1 rounded-full">⏱ {recipe.cook_time}</span>}
@@ -176,33 +161,18 @@ export default function RecipePage() {
             </div>
 
             <div className="flex gap-2 flex-wrap mb-6">
-              <button
-                onClick={toggleSave}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-colors ${saved ? 'bg-stone-100 text-stone-500 border-stone-200' : 'bg-green-900 text-white border-green-900 hover:bg-green-800'}`}
-              >
+              <button onClick={toggleSave} className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-colors ${saved ? 'bg-stone-100 text-stone-500 border-stone-200' : 'bg-green-900 text-white border-green-900 hover:bg-green-800'}`}>
                 {saved ? '✓ Gemt' : 'Gem opskrift'}
               </button>
-              <button
-                onClick={() => setShowMealPicker(true)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-orange-300 text-orange-600 hover:bg-orange-50 transition-colors"
-              >
+              <button onClick={() => setShowMealPicker(true)} className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-orange-300 text-orange-600 hover:bg-orange-50 transition-colors">
                 {mealAdded ? '🗓 Tilføjet!' : '🗓 Madplan'}
               </button>
-              {isOwner && (
-                <button onClick={() => setEditing(true)} className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-stone-200 text-stone-600 hover:bg-stone-50 transition-colors">
-                  Rediger
-                </button>
-              )}
-              {isOwner && (
-                <button onClick={deleteRecipe} className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-red-200 text-red-500 hover:bg-red-50 transition-colors">
-                  Slet
-                </button>
-              )}
+              {isOwner && <button onClick={() => setEditing(true)} className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-stone-200 text-stone-600 hover:bg-stone-50 transition-colors">Rediger</button>}
+              {isOwner && <button onClick={deleteRecipe} className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-red-200 text-red-500 hover:bg-red-50 transition-colors">Slet</button>}
             </div>
 
             {recipe.description && <p className="text-stone-600 mb-8">{recipe.description}</p>}
 
-            {/* Opskalering */}
             <div className="bg-green-50 border border-green-200 rounded-2xl p-4 mb-8 flex items-center gap-4">
               <span className="text-sm font-medium text-green-900">Antal personer</span>
               <div className="flex items-center gap-3 ml-auto">
@@ -216,9 +186,7 @@ export default function RecipePage() {
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-serif text-xl text-stone-800">Ingredienser</h2>
-                  {checkedIngredients.size > 0 && (
-                    <button onClick={() => setCheckedIngredients(new Set())} className="text-xs text-stone-400 hover:text-stone-600">Nulstil</button>
-                  )}
+                  {checkedIngredients.size > 0 && <button onClick={() => setCheckedIngredients(new Set())} className="text-xs text-stone-400 hover:text-stone-600">Nulstil</button>}
                 </div>
                 <div className="bg-white rounded-2xl border border-stone-200 divide-y divide-stone-100">
                   {ingredients.map((ing: string, i: number) => (
@@ -226,9 +194,7 @@ export default function RecipePage() {
                       <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${checkedIngredients.has(i) ? 'bg-green-900 border-green-900' : 'border-stone-300'}`}>
                         {checkedIngredients.has(i) && <span className="text-white text-xs">✓</span>}
                       </div>
-                      <span className={`text-sm transition-colors ${checkedIngredients.has(i) ? 'line-through text-stone-300' : 'text-stone-700'}`}>
-                        {scaleAmount(ing)}
-                      </span>
+                      <span className={`text-sm transition-colors ${checkedIngredients.has(i) ? 'line-through text-stone-300' : 'text-stone-700'}`}>{scaleAmount(ing)}</span>
                     </div>
                   ))}
                 </div>
@@ -239,9 +205,7 @@ export default function RecipePage() {
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-serif text-xl text-stone-800">Fremgangsmåde</h2>
-                  {checkedSteps.size > 0 && (
-                    <button onClick={() => setCheckedSteps(new Set())} className="text-xs text-stone-400 hover:text-stone-600">Nulstil</button>
-                  )}
+                  {checkedSteps.size > 0 && <button onClick={() => setCheckedSteps(new Set())} className="text-xs text-stone-400 hover:text-stone-600">Nulstil</button>}
                 </div>
                 <div className="space-y-3">
                   {steps.map((step: string, i: number) => (
@@ -282,11 +246,11 @@ export default function RecipePage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Tilberedningstid</label>
-                <input name="cook_time" value={form.cook_time} onChange={handleChange} className={inputClass} />
+                <input name="cook_time" value={form.cook_time ?? ''} onChange={handleChange} placeholder="fx 30 min" className={inputClass} />
               </div>
               <div>
                 <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Antal personer</label>
-                <input name="servings" type="number" min="1" value={form.servings || 4} onChange={handleChange} className={inputClass} />
+                <input name="servings" type="number" min="1" value={form.servings ?? ''} onChange={handleChange} placeholder="fx 4" className={inputClass} />
               </div>
             </div>
             <div>
@@ -297,29 +261,19 @@ export default function RecipePage() {
               <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Fremgangsmåde</label>
               <textarea name="instructions" value={form.instructions} onChange={handleChange} rows={10} className={inputClass + " resize-none"} />
             </div>
-
-            {/* Del med alle toggle */}
             <div className="bg-white border border-stone-200 rounded-2xl p-4 flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-stone-800">Del med alle</p>
                 <p className="text-xs text-stone-400 mt-0.5">Andre brugere kan se denne opskrift i deres feed</p>
               </div>
-              <button
-                onClick={() => setForm({ ...form, is_public: !form.is_public })}
-                className={`w-12 h-6 rounded-full transition-colors flex-shrink-0 relative ${form.is_public ? 'bg-green-900' : 'bg-stone-200'}`}
-                style={{ minWidth: '48px' }}
-              >
-                <span
-                  className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200"
-                  style={{ left: form.is_public ? '26px' : '2px' }}
-                />
+              <button onClick={() => setForm({ ...form, is_public: !form.is_public })} className={`w-12 h-6 rounded-full transition-colors flex-shrink-0 relative ${form.is_public ? 'bg-green-900' : 'bg-stone-200'}`} style={{ minWidth: '48px' }}>
+                <span className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200" style={{ left: form.is_public ? '26px' : '2px' }} />
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Madplan modal */}
       {showMealPicker && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl w-full max-w-sm p-6">
