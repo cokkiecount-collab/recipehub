@@ -144,11 +144,26 @@ export default function AddRecipe() {
           </div>
         </div>
 
-        <div>
-          <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Billede</label>
-          {preview && <img src={preview} className="w-full h-48 object-cover rounded-xl mb-3" />}
-          <input type="file" accept="image/*" onChange={handleImage} className="text-sm text-stone-500" />
-        </div>
+        {/* Billede upload — tydeligt */}
+        <label className="block cursor-pointer">
+          <div className={`border-2 border-dashed rounded-2xl transition-colors ${preview ? 'border-green-300 bg-green-50' : 'border-stone-300 bg-white hover:border-green-400 hover:bg-green-50'}`}>
+            {preview ? (
+              <div className="relative">
+                <img src={preview} className="w-full h-56 object-cover rounded-2xl" />
+                <div className="absolute inset-0 bg-black bg-opacity-30 rounded-2xl flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                  <p className="text-white text-sm font-medium">Klik for at skifte billede</p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
+                <div className="w-14 h-14 bg-stone-100 rounded-full flex items-center justify-center mb-3 text-2xl">📷</div>
+                <p className="text-sm font-medium text-stone-700 mb-1">Tilføj et billede</p>
+                <p className="text-xs text-stone-400">Klik her for at vælge et billede fra din enhed</p>
+              </div>
+            )}
+          </div>
+          <input type="file" accept="image/*" onChange={handleImage} className="hidden" />
+        </label>
 
         <div>
           <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Titel *</label>
@@ -194,7 +209,6 @@ export default function AddRecipe() {
           <textarea name="instructions" value={form.instructions} onChange={handleChange} placeholder="Beskriv trin for trin hvordan opskriften laves..." rows={8} className={inputClass + " resize-none"} />
         </div>
 
-        {/* Del med alle toggle */}
         <div className="bg-white border border-stone-200 rounded-2xl p-4 flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-stone-800">Del med alle</p>

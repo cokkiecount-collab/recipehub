@@ -224,6 +224,27 @@ export default function RecipePage() {
           </>
         ) : (
           <div className="space-y-5">
+<div className="bg-stone-50 border-2 border-dashed border-stone-300 rounded-2xl p-6 text-center">
+              <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-3">Billede</label>
+              {form.image_url && <img src={form.image_url} className="w-full h-40 object-cover rounded-xl mb-3" />}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e: any) => {
+                  const file = e.target.files[0]
+                  if (!file) return
+                  const fileExt = file.name.split('.').pop()
+                  const fileName = `${Date.now()}.${fileExt}`
+                  const { error } = await supabase.storage.from('recipe-images').upload(fileName, file)
+                  if (!error) {
+                    const { data: urlData } = supabase.storage.from('recipe-images').getPublicUrl(fileName)
+                    setForm({ ...form, image_url: urlData.publicUrl })
+                  }
+                }}
+                className="text-sm text-stone-500"
+              />
+              <p className="text-xs text-stone-400 mt-2">Klik for at vælge et billede</p>
+            </div>
             <div>
               <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Titel</label>
               <input name="title" value={form.title} onChange={handleChange} className={inputClass} />
