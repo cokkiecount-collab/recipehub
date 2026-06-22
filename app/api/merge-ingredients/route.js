@@ -20,6 +20,10 @@ Regler:
 - Slå samme ingrediens sammen og læg mængder sammen (fx "2 tsk salt" + "1 tsk salt" = "3 tsk salt")
 - Behold den mest præcise enhed (fx gram frem for stykker hvis begge nævnes)
 - Hvis mængder ikke kan lægges sammen (fx "lidt salt" + "2 tsk salt"), skriv den største mængde
+- Betragt "salt", "groft salt", "fint salt", "havsalt" osv. som den samme vare — slå dem alle sammen til bare "salt"
+- Betragt "peber", "sort peber", "friskkværnet peber", "hvid peber" osv. som den samme vare — slå dem alle sammen til bare "peber"
+- Betragt "olie", "olivenolie", "rapsolie" osv. som samme vare hvis konteksten er den samme ret
+- Generelt: slå ingredienser sammen hvis de er den samme grundvare, selv om de har lidt forskellige beskrivelser
 - Fjern ikke noget — slå kun ens ting sammen
 - Returner KUN en JSON array med strings, ingen forklaring
 
