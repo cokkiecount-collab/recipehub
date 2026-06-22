@@ -201,16 +201,15 @@ export default function AddRecipe() {
             <p className="text-xs text-stone-400 mt-0.5">Andre brugere kan se denne opskrift i deres feed</p>
           </div>
           <button
-            <button
-  onClick={() => setIsPublic(!isPublic)}
-  className={`w-12 h-6 rounded-full transition-colors flex-shrink-0 relative ${isPublic ? 'bg-green-900' : 'bg-stone-200'}`}
-  style={{ minWidth: '48px' }}
->
-  <span
-    className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200"
-    style={{ left: isPublic ? '26px' : '2px' }}
-  />
-</button>
+            onClick={() => setIsPublic(!isPublic)}
+            className={`w-12 h-6 rounded-full transition-colors flex-shrink-0 relative ${isPublic ? 'bg-green-900' : 'bg-stone-200'}`}
+            style={{ minWidth: '48px' }}
+          >
+            <span
+              className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200"
+              style={{ left: isPublic ? '26px' : '2px' }}
+            />
+          </button>
         </div>
 
         {message && <p className="text-sm text-red-600 bg-red-50 p-3 rounded-xl">{message}</p>}
