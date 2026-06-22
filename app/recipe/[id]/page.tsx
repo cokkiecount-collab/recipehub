@@ -225,12 +225,27 @@ export default function RecipePage() {
           </>
         ) : (
           <div className="space-y-5">
-<div className="bg-stone-50 border-2 border-dashed border-stone-300 rounded-2xl p-6 text-center">
-              <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-3">Billede</label>
-              {form.image_url && <img src={form.image_url} className="w-full h-40 object-cover rounded-xl mb-3" />}
+<label className="block cursor-pointer">
+              <div className={`border-2 border-dashed rounded-2xl transition-colors ${form.image_url ? 'border-green-300 bg-green-50' : 'border-stone-300 bg-white hover:border-green-400 hover:bg-green-50'}`}>
+                {form.image_url ? (
+                  <div className="relative">
+                    <img src={form.image_url} className="w-full h-56 object-cover rounded-2xl" />
+                    <div className="absolute inset-0 bg-black bg-opacity-30 rounded-2xl flex items-center justify-center">
+                      <p className="text-white text-sm font-medium">Tryk for at skifte billede</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
+                    <div className="w-14 h-14 bg-stone-100 rounded-full flex items-center justify-center mb-3 text-2xl">📷</div>
+                    <p className="text-sm font-medium text-stone-700 mb-1">Tilføj et billede</p>
+                    <p className="text-xs text-stone-400">Tryk her for at vælge et billede</p>
+                  </div>
+                )}
+              </div>
               <input
                 type="file"
                 accept="image/*"
+                className="hidden"
                 onChange={async (e: any) => {
                   const file = e.target.files[0]
                   if (!file) return
@@ -242,10 +257,8 @@ export default function RecipePage() {
                     setForm({ ...form, image_url: urlData.publicUrl })
                   }
                 }}
-                className="text-sm text-stone-500"
               />
-              <p className="text-xs text-stone-400 mt-2">Klik for at vælge et billede</p>
-            </div>
+            </label>
             <div>
               <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">Titel</label>
               <input name="title" value={form.title} onChange={handleChange} className={inputClass} />
