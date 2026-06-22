@@ -187,6 +187,9 @@ export default function AddRecipe() {
               <option>Snacks</option>
               <option>Bagværk</option>
               <option>Vegetar</option>
+              <option>Drinks</option>
+	      <option>Fine dining</option>
+	      <option>Syltning</option>
             </select>
           </div>
           <div>

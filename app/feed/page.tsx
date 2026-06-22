@@ -12,7 +12,7 @@ export default function Feed() {
   const [view, setView] = useState('grid')
   const [showMenu, setShowMenu] = useState(false)
 
-  const categories = ['Alle', 'Aftensmad', 'Morgenmad', 'Frokost', 'Dessert', 'Snacks', 'Bagværk', 'Vegetar']
+  const categories = ['Alle', 'Aftensmad', 'Morgenmad', 'Frokost', 'Dessert', 'Snacks', 'Bagværk', 'Vegetar', 'Drinks', 'Fine dining', 'Syltning']
 
   useEffect(() => {
     async function load() {
