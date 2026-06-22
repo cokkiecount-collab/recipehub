@@ -24,6 +24,9 @@ export default function RecipePage() {
   const [avgRating, setAvgRating] = useState(0)
   const [ratingCount, setRatingCount] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
+  const [comments, setComments] = useState([] as any[])
+  const [newComment, setNewComment] = useState('')
+  const [postingComment, setPostingComment] = useState(false)
 
   const mealTypes = ['Morgenmad', 'Frokost', 'Aftensmad', 'Snack']
 
@@ -47,10 +50,34 @@ export default function RecipePage() {
       }
       const { data: myRating } = await supabase.from('ratings').select('rating').eq('recipe_id', id).eq('user_id', user.id).single()
       if (myRating) setUserRating(myRating.rating)
+      await loadComments()
       setLoading(false)
     }
     load()
   }, [id])
+
+  async function loadComments() {
+    const { data } = await supabase
+      .from('comments')
+      .select('*, profiles:user_id(email)')
+      .eq('recipe_id', id)
+      .order('created_at', { ascending: true })
+    setComments(data || [])
+  }
+
+  async function postComment() {
+    if (!newComment.trim()) return
+    setPostingComment(true)
+    await supabase.from('comments').insert({ recipe_id: id, user_id: user.id, comment: newComment.trim() })
+    setNewComment('')
+    await loadComments()
+    setPostingComment(false)
+  }
+
+  async function deleteComment(commentId: string) {
+    await supabase.from('comments').delete().eq('id', commentId)
+    await loadComments()
+  }
 
   async function rateRecipe(rating: number) {
     if (userRating === rating) {
@@ -203,13 +230,7 @@ export default function RecipePage() {
               </div>
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map(star => (
-                  <button
-                    key={star}
-                    onClick={() => rateRecipe(star)}
-                    onMouseEnter={() => setHoverRating(star)}
-                    onMouseLeave={() => setHoverRating(0)}
-                    className="text-2xl transition-transform hover:scale-110"
-                  >
+                  <button key={star} onClick={() => rateRecipe(star)} onMouseEnter={() => setHoverRating(star)} onMouseLeave={() => setHoverRating(0)} className="text-2xl transition-transform hover:scale-110">
                     {star <= (hoverRating || userRating) ? '⭐' : '☆'}
                   </button>
                 ))}
@@ -258,7 +279,7 @@ export default function RecipePage() {
             )}
 
             {steps.length > 0 && (
-              <div>
+              <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-serif text-xl text-stone-800">Fremgangsmåde</h2>
                   {checkedSteps.size > 0 && <button onClick={() => setCheckedSteps(new Set())} className="text-xs text-stone-400 hover:text-stone-600">Nulstil</button>}
@@ -275,6 +296,54 @@ export default function RecipePage() {
                 </div>
               </div>
             )}
+
+            {/* Kommentarer */}
+            <div className="mt-8">
+              <h2 className="font-serif text-xl text-stone-800 mb-4">Kommentarer {comments.length > 0 && <span className="text-stone-400 text-base">({comments.length})</span>}</h2>
+
+              {comments.length === 0 && (
+                <p className="text-stone-400 text-sm mb-4">Ingen kommentarer endnu — vær den første!</p>
+              )}
+
+              <div className="space-y-3 mb-4">
+                {comments.map((c: any) => (
+                  <div key={c.id} className="bg-white rounded-2xl border border-stone-200 px-5 py-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-xs font-medium text-orange-700">
+                          {c.profiles?.email?.[0].toUpperCase() || '?'}
+                        </div>
+                        <span className="text-xs text-stone-500">{c.profiles?.email?.split('@')[0]}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-stone-300">{new Date(c.created_at).toLocaleDateString('da-DK')}</span>
+                        {c.user_id === user.id && (
+                          <button onClick={() => deleteComment(c.id)} className="text-stone-300 hover:text-red-400 text-xs">✕</button>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-sm text-stone-700">{c.comment}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  value={newComment}
+                  onChange={e => setNewComment(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && postComment()}
+                  placeholder="Skriv en kommentar..."
+                  className="flex-1 border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-green-800 text-stone-800 bg-white"
+                />
+                <button
+                  onClick={postComment}
+                  disabled={postingComment || !newComment.trim()}
+                  className="bg-green-900 text-white rounded-xl px-4 py-3 text-sm font-medium hover:bg-green-800 disabled:opacity-50"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
           </>
         ) : (
           <div className="space-y-5">
