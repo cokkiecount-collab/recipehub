@@ -63,6 +63,7 @@ export default function Feed() {
         <div className="flex-1" />
         <a href="/add" className="bg-green-900 text-white rounded-xl px-4 py-2 text-sm font-medium hover:bg-green-800">+ Tilføj</a>
         <a href="/mealplan" className="border border-green-900 text-green-900 rounded-xl px-4 py-2 text-sm font-medium hover:bg-green-50">🗓 Madplan</a>
+<a href="/shopping" className="border border-green-900 text-green-900 rounded-xl px-4 py-2 text-sm font-medium hover:bg-green-50">🛒 Indkøb</a>
         <a href="/profile" className="text-stone-600 text-sm font-medium hover:text-stone-800">Min profil</a>
         <button onClick={logout} className="text-stone-600 text-sm font-medium hover:text-stone-800">Log ud</button>
       </nav>
