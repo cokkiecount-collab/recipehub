@@ -70,9 +70,8 @@ export default function ShoppingList() {
       })
       if (mealPlanIngredients.length === 0) { alert('Ingen ingredienser fundet i madplanen'); setImporting(false); return }
 
-      // Kombiner med eksisterende varer på listen
-      const existingItems = items.map(i => i.item)
-      const allIngredients = [...existingItems, ...mealPlanIngredients]
+      // Brug kun madplan ingredienser — start frisk hver gang
+      const allIngredients = [...mealPlanIngredients]
 
       // Send alle til Claude for at slå sammen
       const res = await fetch('/api/merge-ingredients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ingredients: allIngredients }) })
