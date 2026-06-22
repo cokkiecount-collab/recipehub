@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 export default function Feed() {
   const [recipes, setRecipes] = useState([])
   const [filtered, setFiltered] = useState([])
+  const [ratings, setRatings] = useState({} as any)
   const [user, setUser] = useState(null as any)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -26,6 +27,12 @@ export default function Feed() {
         .order('title', { ascending: true })
       setRecipes(data || [])
       setFiltered(data || [])
+
+      const { data: ratingData } = await supabase.from('recipe_ratings').select('*')
+      const ratingMap: any = {}
+      ratingData?.forEach((r: any) => { ratingMap[r.recipe_id] = r })
+      setRatings(ratingMap)
+
       setLoading(false)
     }
     load()
@@ -53,6 +60,17 @@ export default function Feed() {
       groups[letter].push(r)
     })
     return groups
+  }
+
+  function StarBadge({ recipeId }: { recipeId: string }) {
+    const r = ratings[recipeId]
+    if (!r) return null
+    return (
+      <div className="absolute top-2 left-2 bg-black bg-opacity-50 rounded-full px-2 py-0.5 flex items-center gap-1">
+        <span className="text-yellow-400 text-xs">⭐</span>
+        <span className="text-white text-xs font-medium">{parseFloat(r.avg_rating).toFixed(1)}</span>
+      </div>
+    )
   }
 
   if (loading) return <div className="min-h-screen bg-stone-50 flex items-center justify-center"><p className="text-stone-400">Indlæser...</p></div>
@@ -91,7 +109,6 @@ export default function Feed() {
 
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-6">
 
-        {/* Søgning */}
         <div className="flex gap-3 mb-5">
           <input
             value={search}
@@ -104,7 +121,6 @@ export default function Feed() {
           </button>
         </div>
 
-        {/* Kategorier */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
           {categories.map(cat => (
             <button key={cat} onClick={() => setCategory(cat)} className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${category === cat ? 'bg-green-900 text-white border-green-900' : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'}`}>
@@ -120,14 +136,20 @@ export default function Feed() {
           </div>
         )}
 
-        {/* Grid visning */}
+        {/* Grid visning — fast størrelse */}
         {view === 'grid' && filtered.length > 0 && (
-          <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filtered.map((recipe: any) => (
-              <div key={recipe.id} className="break-inside-avoid mb-4 bg-white rounded-2xl border border-stone-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = `/recipe/${recipe.id}`}>
-                {recipe.image_url ? <img src={recipe.image_url} alt={recipe.title} className="w-full object-cover" /> : <div className="w-full h-40 bg-stone-100 flex items-center justify-center text-4xl">🍽️</div>}
+              <div key={recipe.id} className="bg-white rounded-2xl border border-stone-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer" onClick={() => window.location.href = `/recipe/${recipe.id}`}>
+                <div className="relative">
+                  {recipe.image_url
+                    ? <img src={recipe.image_url} alt={recipe.title} className="w-full h-40 object-cover" />
+                    : <div className="w-full h-40 bg-stone-100 flex items-center justify-center text-4xl">🍽️</div>
+                  }
+                  <StarBadge recipeId={recipe.id} />
+                </div>
                 <div className="p-4">
-                  <h2 className="font-serif text-base text-stone-800 mb-1">{recipe.title}</h2>
+                  <h2 className="font-serif text-base text-stone-800 mb-1 line-clamp-2">{recipe.title}</h2>
                   <div className="flex items-center gap-2 flex-wrap">
                     {recipe.cook_time && <p className="text-xs text-stone-400">⏱ {recipe.cook_time}</p>}
                     {recipe.servings && <p className="text-xs text-stone-400">👤 {recipe.servings} pers.</p>}
@@ -163,7 +185,17 @@ export default function Feed() {
                 <div className="space-y-2">
                   {items.map((recipe: any) => (
                     <div key={recipe.id} className="bg-white rounded-xl border border-stone-200 p-4 flex items-center gap-4 hover:shadow-sm transition-shadow cursor-pointer" onClick={() => window.location.href = `/recipe/${recipe.id}`}>
-                      {recipe.image_url ? <img src={recipe.image_url} alt={recipe.title} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" /> : <div className="w-14 h-14 rounded-xl bg-stone-100 flex items-center justify-center text-2xl flex-shrink-0">🍽️</div>}
+                      <div className="relative flex-shrink-0">
+                        {recipe.image_url
+                          ? <img src={recipe.image_url} alt={recipe.title} className="w-14 h-14 rounded-xl object-cover" />
+                          : <div className="w-14 h-14 rounded-xl bg-stone-100 flex items-center justify-center text-2xl">🍽️</div>
+                        }
+                        {ratings[recipe.id] && (
+                          <div className="absolute -bottom-1 -right-1 bg-yellow-400 rounded-full w-5 h-5 flex items-center justify-center">
+                            <span className="text-xs font-medium text-yellow-900">{parseFloat(ratings[recipe.id].avg_rating).toFixed(0)}</span>
+                          </div>
+                        )}
+                      </div>
                       <div className="flex-1">
                         <h3 className="font-serif text-base text-stone-800">{recipe.title}</h3>
                         <div className="flex gap-2 mt-1 flex-wrap">
