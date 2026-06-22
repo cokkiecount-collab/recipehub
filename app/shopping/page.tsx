@@ -60,23 +60,28 @@ export default function ShoppingList() {
       sunday.setDate(monday.getDate() + 6)
       const { data: mealPlan } = await supabase.from('meal_plans').select('*, recipes(*)').eq('user_id', user.id).gte('planned_date', monday.toISOString().split('T')[0]).lte('planned_date', sunday.toISOString().split('T')[0])
       if (!mealPlan || mealPlan.length === 0) { alert('Ingen opskrifter i madplanen denne uge'); setImporting(false); return }
-      const allIngredients: string[] = []
+
+      // Hent ingredienser fra madplanen
+      const mealPlanIngredients: string[] = []
       mealPlan.forEach(m => {
         if (m.recipes?.ingredients) {
-          m.recipes.ingredients.split('\n').forEach((ing: string) => { if (ing.trim()) allIngredients.push(ing.trim()) })
+          m.recipes.ingredients.split('\n').forEach((ing: string) => { if (ing.trim()) mealPlanIngredients.push(ing.trim()) })
         }
       })
-      if (allIngredients.length === 0) { alert('Ingen ingredienser fundet'); setImporting(false); return }
+      if (mealPlanIngredients.length === 0) { alert('Ingen ingredienser fundet i madplanen'); setImporting(false); return }
+
+      // Kombiner med eksisterende varer på listen
+      const existingItems = items.map(i => i.item)
+      const allIngredients = [...existingItems, ...mealPlanIngredients]
+
+      // Send alle til Claude for at slå sammen
       const res = await fetch('/api/merge-ingredients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ingredients: allIngredients }) })
       const data = await res.json()
       if (data.error) { alert('Kunne ikke slå ingredienser sammen'); setImporting(false); return }
-      const existing = items.map(i => i.item.toLowerCase())
-      const toAdd = data.merged.filter((ing: string) => {
-        const clean = ing.toLowerCase().replace(/[\d.,]+\s*(g|kg|ml|l|dl|cl|spsk|tsk|stk|fed|blade|nip|bundt|pose|pakke|skive|stykke)\s*/gi, '').trim()
-        return !existing.some(e => e.includes(clean) || clean.includes(e))
-      })
-      if (toAdd.length === 0) { alert('Alle ingredienser er allerede på listen!'); setImporting(false); return }
-      await supabase.from('shopping_list').insert(toAdd.map((item: string) => ({ user_id: user.id, item, from_meal_plan: true })))
+
+      // Slet hele listen og erstat med den sammenslutte
+      await supabase.from('shopping_list').delete().eq('user_id', user.id)
+      await supabase.from('shopping_list').insert(data.merged.map((item: string) => ({ user_id: user.id, item, from_meal_plan: true })))
       await loadItems(user.id)
     } catch { alert('Noget gik galt — prøv igen') }
     setImporting(false)
